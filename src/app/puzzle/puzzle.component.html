@@ -1,0 +1,32 @@
+<div *ngIf="puzzle" style="text-align: center;">
+	<div id="puzzle-content" style="text-align: center;">
+		<div style="width:500px;">
+			<div id="timer-section">
+				<div id="timer">0:00</div>
+				<div id="timer-start-pause">
+					<div id="timer-start-pause-button"><img src="../../assets/pause.png" style="height:15px;width:15px;"></div>
+				</div>
+			</div>
+			<div id="clue-header">
+				<div style="width: 40px;"><div id="clue-header-number"></div></div>
+				<div id="clue-header-text"></div>
+			</div>
+			<div style="display: inline-block;">
+				<div id="crossword-grid-overlay"></div>
+				<table id="crossword-table"></table>
+			</div>
+		</div>
+		<div style="width:600px;">
+			<div id="clues">
+				<div id="across-clues-section" class="clue-section" style="margin-right: 10px;">
+					<div id="across-clues-title" class="clue-section-title">Across</div>
+					<div id="across-clues-listing" class="clue-section-listing"></div>
+				</div>
+				<div id="down-clues-section" class="clue-section">
+					<div id="down-clues-title" class="clue-section-title">Down</div>
+					<div id="down-clues-listing" class="clue-section-listing"></div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>

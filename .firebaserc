@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "cmack-project"
+  },
+  "targets": {
+    "cmack-project": {
+      "hosting": {
+        "crossword-app": [
+          "cmack-project"
+        ]
+      }
+    }
+  }
+}

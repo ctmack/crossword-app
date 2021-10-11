@@ -19,7 +19,11 @@
     "lib": [
       "es2018",
       "dom"
-    ]
+    ],
+    "typeRoots": [
+     "./node_modules/@types",
+     "./@types"
+   ]
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,
