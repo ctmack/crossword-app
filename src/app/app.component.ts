@@ -50,7 +50,7 @@ export class AppComponent {
       puzzleSize.innerHTML = puzzle.grid.length.toString() + " x " + puzzle.grid.length.toString();
       routerLink.appendChild(puzzleSize);
       routerLink.addEventListener("click", () => {
-        this.router.navigateByUrl('/puzzle', { state: {id: puzzle["id"]} });
+        this.router.navigateByUrl('/puzzle/' + puzzle["id"], { state: {id: puzzle["id"]} });
       });
       return routerLink;
   }

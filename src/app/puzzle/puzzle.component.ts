@@ -1,8 +1,9 @@
 import { Component, HostListener, ViewEncapsulation, OnInit, AfterViewInit, OnDestroy, Input } from '@angular/core';
 import { AppRoutingModule } from './../app-routing.module'
 import { Puzzle } from '../puzzle';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute, ParamMap } from '@angular/router';
 import { PuzzleService } from '../puzzle.service';
+import { switchMap } from 'rxjs/operators';
 declare var $: any;
 
 @Component({
@@ -15,27 +16,36 @@ export class PuzzleComponent implements OnInit, AfterViewInit {
 
   puzzles : Puzzle[] = [];
   puzzle?: Puzzle;
-  puzzleId: number;
+  puzzleId: number = 0;
   count: number = 0;
   timer: number = 0;
+  totalTime: number = 0;
   paused: boolean = false;
   gridElems: HTMLElement[] = [];
   focusAcross: boolean = true;
   puzzleComplete: boolean = false;
+  userGridString: String = "";
 
-  constructor(private puzzleService: PuzzleService, private router : Router) {
-    var puzzleState = this.router!.getCurrentNavigation()!.extras.state;
-    if(puzzleState != undefined){
-      this.puzzleId = this.router!.getCurrentNavigation()!.extras.state!["id"];
-    }
-    else{
-      this.puzzleId = -1;
-    }
+  constructor(private puzzleService: PuzzleService, private route: ActivatedRoute, private router : Router) {
+    //var puzzleState = this.router!.getCurrentNavigation()!.extras.state;
+    //if(puzzleState != undefined){
+     // this.puzzleId = this.router!.getCurrentNavigation()!.extras.state!["id"];
+    //}
+    //else{
+    //  this.puzzleId = -1;
+    //}
   }
 
   ngOnInit(): void {
     document.getElementById("nav-table")!.style.display="none";
+    //this.puzzleId = 
+    console.log(this.route.paramMap.pipe(
+      switchMap((params: ParamMap) =>
+        params.get('id')!
+      )
+    ).subscribe( id => { this.puzzleId = Number(id); }));
     this.getPuzzle(this.puzzleId);
+
     if(this.puzzle == undefined){
       this.router.navigateByUrl('/');
     }
@@ -55,6 +65,7 @@ export class PuzzleComponent implements OnInit, AfterViewInit {
     this.populateClues();
     this.buildTable();
     this.setClueHeader(<HTMLElement> document.getElementsByClassName("clue")![0]);
+    this.totalTime = Number(this.getCookie("timer" + this.puzzleId));
     this.counter();
     document.getElementById('timer-start-pause-button')!.addEventListener("click", () => {
 
@@ -387,7 +398,7 @@ export class PuzzleComponent implements OnInit, AfterViewInit {
     }
     this.highlightWord(this.gridElems[i]);
 
-    var gridBoxHeight = (400 - ((rowCount*4) - 2)) / rowCount;
+    var gridBoxHeight = (550 - ((rowCount*4) - 2)) / rowCount;
     gridBoxHeight = Math.round(gridBoxHeight);
     var crosswordTable = document.getElementById("crossword-table");
     var thList = crosswordTable!.getElementsByTagName("TH");
@@ -401,6 +412,43 @@ export class PuzzleComponent implements OnInit, AfterViewInit {
     for(var i = 0; i < numberLabelList.length; i++){
       (<HTMLElement> numberLabelList[i]).style.top = gridBoxNumTop + "px";
     }
+
+    var gridCookieName = "userGrid" + this.puzzleId + "=";
+    var decodedCookie = decodeURIComponent(document.cookie);
+    var ca = decodedCookie.split(';');
+    for(let i = 0; i < ca.length; i++) {
+      var c = ca[i];
+      while (c.charAt(0) == ' ') {
+        c = c.substring(1);
+      }
+      if (c.indexOf(gridCookieName) == 0) {
+        this.userGridString = c.substring(gridCookieName.length, c.length);
+      }
+    }
+
+    this.userGridString = this.getCookie("userGrid" + this.puzzleId);
+    for(var i = 0; i < this.userGridString.length; i++){
+      if(this.userGridString[i] != "."){
+        (<HTMLElement> this.gridElems[i].childNodes[1]).innerHTML = this.userGridString[i];
+      }
+    }
+
+  }
+
+  getCookie(cookieName : String){
+    var gridCookieName = cookieName + "=";
+    var decodedCookie = decodeURIComponent(document.cookie);
+    var ca = decodedCookie.split(';');
+    for(let i = 0; i < ca.length; i++) {
+      var c = ca[i];
+      while (c.charAt(0) == ' ') {
+        c = c.substring(1);
+      }
+      if (c.indexOf(gridCookieName) == 0) {
+        return c.substring(gridCookieName.length, c.length);
+      }
+    }
+    return "";
   }
 
   findNextOpen(){
@@ -450,6 +498,24 @@ export class PuzzleComponent implements OnInit, AfterViewInit {
       }
     }
     return null;
+  }
+
+  populateUserGridString(){
+    this.userGridString = "";
+    for(var i = 0; i < this.gridElems.length; i++){
+      if(this.gridElems[i].hasChildNodes()){
+        if((<HTMLElement> this.gridElems[i].childNodes[1]).innerHTML != ""){
+          this.userGridString = this.userGridString + (<HTMLElement> this.gridElems[i].childNodes[1]).innerHTML;
+        }
+        else {
+          this.userGridString = this.userGridString + ".";
+        }
+      }
+      else{
+        this.userGridString = this.userGridString + ".";
+      }
+    }
+    document.cookie="userGrid"+ this.puzzleId + "=" + this.userGridString;
   }
 
   nextOpenSpaceInCurrentClue(elem: HTMLElement){
@@ -669,6 +735,7 @@ export class PuzzleComponent implements OnInit, AfterViewInit {
         }
       }
     }
+    this.populateUserGridString();
   }
 
   checkAnswers(){
@@ -697,14 +764,14 @@ export class PuzzleComponent implements OnInit, AfterViewInit {
       minimumIntegerDigits: 2,
       useGrouping: false
     }));
+    
   }
-
-  totalTime: number = 0;
 
   counter() {
     this.totalTime = this.totalTime + 0.1;
 
     this.setTimer(Math.floor(this.totalTime));
+    document.cookie = "timer" + this.puzzleId + "=" + this.totalTime;
 
     this.timer = setTimeout( () => {
       this.counter();

@@ -5,7 +5,7 @@ import { PuzzleComponent } from './puzzle/puzzle.component';
 
 const routes: Routes = [
   //{ path: 'crosswords', component: CrosswordsComponent },
-  { path: 'puzzle', component: PuzzleComponent }
+  { path: 'puzzle/:id', component: PuzzleComponent }
 ];
 
 @NgModule({
