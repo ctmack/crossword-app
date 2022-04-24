@@ -43,14 +43,16 @@ export class AppComponent {
       routerLink.appendChild(puzzleIcon);
       var puzzleDate = document.createElement("div");
       puzzleDate.classList.add("puzzle-date");
+      //date formatting here
       puzzleDate.innerHTML = puzzle.date;
       routerLink.appendChild(puzzleDate);
       var puzzleSize = document.createElement("div");
       puzzleSize.classList.add("puzzle-size");
-      puzzleSize.innerHTML = puzzle.grid.length.toString() + " x " + puzzle.grid.length.toString();
+      puzzleSize.innerHTML = puzzle.height.toString() + " x " + puzzle.width.toString();
       routerLink.appendChild(puzzleSize);
+      console.log(puzzle["id"]);
       routerLink.addEventListener("click", () => {
-        this.router.navigateByUrl('/puzzle/' + puzzle["id"], { state: {id: puzzle["id"]} });
+        this.router.navigateByUrl('/puzzle/' + puzzle["id"]);
       });
       return routerLink;
   }

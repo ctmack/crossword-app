@@ -1,8 +1,11 @@
 export interface Puzzle {
-	id: number;
+	id: string;
 	title: string;
 	date: string;
-	grid: string[][];
-	acrossClues: string[];
-	downClues: string[];
+	grid: string;
+	height: number;
+	width: number;
+	key: string;
+	acrossClues: string;
+	downClues: string;
 }

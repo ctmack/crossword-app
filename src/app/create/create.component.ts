@@ -4,105 +4,116 @@ import { Puzzle } from '../puzzle';
 import { Router, ActivatedRoute, ParamMap } from '@angular/router';
 import { PuzzleService } from '../puzzle.service';
 import { switchMap } from 'rxjs/operators';
-declare var $: any;
 
 @Component({
-  selector: 'app-puzzle',
-  templateUrl: './puzzle.component.html',
-  styleUrls: ['./puzzle.component.css'],
+  selector: 'app-create',
+  templateUrl: './create.component.html',
+  styleUrls: ['./create.component.css'],
   encapsulation: ViewEncapsulation.None
 })
-export class PuzzleComponent implements OnInit, AfterViewInit {
+export class CreateComponent implements OnInit, AfterViewInit {
 
-  puzzles : Puzzle[] = [];
-  puzzle?: Puzzle;
-  puzzleId: String = "";
   count: number = 0;
-  timer: number = 0;
-  totalTime: number = 0;
   paused: boolean = false;
   gridElems: HTMLElement[] = [];
   focusAcross: boolean = true;
   puzzleComplete: boolean = false;
-  userGridString: String = "";
+  puzzleGridString: String = "";
+  constructMode: String = ""; // build, fill
+  mirrorMode: String = ""; // free*, x-axis*, y-axis*, xy-axis*, rotational*, diagonal*
+  puzzleWidth: number = 15;
+  puzzleHeight: number = 15;
 
-  constructor(private puzzleService: PuzzleService, private route: ActivatedRoute, private router : Router) {
-    //var puzzleState = this.router!.getCurrentNavigation()!.extras.state;
-    //if(puzzleState != undefined){
-     // this.puzzleId = this.router!.getCurrentNavigation()!.extras.state!["id"];
-    //}
-    //else{
-    //  this.puzzleId = -1;
-    //}
+  constructor() {
   }
 
   ngOnInit(): void {
     document.getElementById("nav-table")!.style.display="none";
-    this.route.paramMap.pipe(
-      switchMap((params: ParamMap) =>
-        params.get('id')!
-      )
-    ).subscribe( id => { this.puzzleId = this.puzzleId + id; });
-    this.getPuzzle(this.puzzleId);
-
-    if(this.puzzle == undefined){
-      this.router.navigateByUrl('/');
+    for(var i = 0; i < this.puzzleWidth; i++){
+      for(var j = 0; j < this.puzzleHeight; j++){
+        this.puzzleGridString = this.puzzleGridString + ".";
+      }
     }
   }
 
   ngOnDestroy(): void {
-    clearTimeout(this.timer);
     document.getElementById("nav-table")!.style.display="block";
     (<HTMLElement> document.getElementById("headline-sub-title")).innerHTML = "";
   }
 
   ngAfterViewInit(): void {
-    if(this.puzzle == undefined){
-      return;
-    }
-    (<HTMLElement> document.getElementById("headline-sub-title")).innerHTML = "|<span style=\"margin-left:20px\">" + this.puzzle.title + "</span>";
-    this.populateClues();
+    (<HTMLElement> document.getElementById("headline-sub-title")).innerHTML = "|<span style=\"margin-left:20px\">Create Puzzle</span>";
+    this.buttonSetup();
     this.buildTable();
-    this.setClueHeader(<HTMLElement> document.getElementsByClassName("clue")![0]);
-    this.totalTime = Number(this.getCookie("timer" + this.puzzleId));
-    this.counter();
-    document.getElementById('timer-start-pause-button')!.addEventListener("click", () => {
-
-      clearTimeout(this.timer);
-
-      this.paused = !this.paused;
-      if(!this.paused) {
-        this.counter();
-        document.getElementById("timer")!.style.color="black";
-        (<HTMLElement> document.getElementsByClassName("clue-section-listing")![0]).style.backgroundColor="#FFF";
-        (<HTMLElement> document.getElementsByClassName("clue-section-listing")![1]).style.backgroundColor="#FFF";
-        document.getElementById("clue-header-text")!.classList.remove("hidden");
-        document.getElementById("clue-header-number")!.classList.remove("hidden");
-        this.unhideClues();
-      }
-      else{
-        //clear header clue
-        (<HTMLElement> document.getElementsByClassName("clue-section-listing")![0]).style.backgroundColor="#EFEFEF";
-        (<HTMLElement> document.getElementsByClassName("clue-section-listing")![1]).style.backgroundColor="#EFEFEF";
-        document.getElementById("timer")!.style.color="#BBB";
-        document.getElementById("clue-header-text")!.classList.add("hidden");
-        document.getElementById("clue-header-number")!.classList.add("hidden");
-        this.hideClues()
-      }
-    });
   }
 
-  getPuzzle(id: String): void {
-      this.puzzleService.getPuzzles().subscribe(
-        puzzles => {
-          this.puzzles = puzzles;
-        }
-      );
-      for(var puzzle of this.puzzles){
-        if(puzzle.id == id){
-          this.puzzle = puzzle;
-        }
-      }
+  buttonSetup(){
+    for(var i = 0; i < document.getElementsByClassName("mirror-type").length; i++){
+      document.getElementsByClassName("mirror-type")[i].addEventListener("click", (event) => {
+        var targetElem = <HTMLElement> event.target;
+        this.mirrorMode = targetElem.innerHTML.toLowerCase();
+        this.clearMirrorSelect();
+        targetElem.classList.add("selected");
+      })
+    }
+
+    document.getElementById("construct-fill-button")!.addEventListener("click", (event) => {
+      var targetElem = <HTMLElement> event.target;
+      document.getElementById("build-section")!.classList.add("hidden");
+      this.clearConstructSelect();
+      targetElem.classList.add("selected");
+      this.constructMode = "fill";
+    });
+    document.getElementById("construct-build-button")!.addEventListener("click", (event) => {
+      document.getElementById("build-section")!.classList.remove("hidden");
+      var targetElem = <HTMLElement> event.target;
+      this.mirrorMode = targetElem.innerHTML.toLowerCase();
+      this.clearMirrorSelect();
+      this.clearConstructSelect();
+      document.getElementsByClassName("mirror-type")[0].classList.add("selected");
+      targetElem.classList.add("selected");
+      this.constructMode = "build";
+    })
+
+    this.constructMode = document.getElementsByClassName("construct-type")[0].innerHTML.toLowerCase();
+    document.getElementsByClassName("construct-type")[0].classList.add("selected");
+    if(this.constructMode != "fill"){
+      document.getElementsByClassName("mirror-type")[0].classList.add("selected");
+      this.mirrorMode = document.getElementsByClassName("mirror-type")[0].innerHTML.toLowerCase();
+    }
+
+    document.getElementById('clear-letters-button')!.addEventListener("click", (event) => {
+      this.clearLetters();
+    })
+    document.getElementById('clear-all-button')!.addEventListener("click", (event) => {
+      this.clearAll();
+    })
+
+    document.getElementById('preset-15')!.addEventListener("click", (event) => {
+      this.puzzleWidth = 15;
+      this.puzzleHeight = 15;
+      this.clearAll();
+    })
+    document.getElementById('preset-21')!.addEventListener("click", (event) => {
+      this.puzzleWidth = 21;
+      this.puzzleHeight = 21;
+      this.clearAll();
+    })
+    document.getElementById('preset-5')!.addEventListener("click", (event) => {
+      this.puzzleWidth = 5;
+      this.puzzleHeight = 5;
+      this.clearAll();
+    })
+    document.getElementById('preset-6')!.addEventListener("click", (event) => {
+      this.puzzleWidth = 6;
+      this.puzzleHeight = 6;
+      this.clearAll();
+    })
+    document.getElementById('preset-8')!.addEventListener("click", (event) => {
+      this.puzzleWidth = 8;
+      this.puzzleHeight = 8;
+      this.clearAll();
+    })
   }
 
   highlightWord(elem: HTMLElement) {
@@ -121,130 +132,39 @@ export class PuzzleComponent implements OnInit, AfterViewInit {
     elem.classList.add("focus");
   }
 
-  complementaryHighlights(clue: String){
-    var clueId = "";
-    var splitClue = clue.split(" ");
-    for(var i = 0; i < splitClue.length; i++){
-      if(splitClue[i].includes("-Across")){
-        clueId = "A" + splitClue[i].split("-")[0];
-      }
-      else if(splitClue[i].includes("-Down")){
-        clueId = "D" + splitClue[i].split("-")[0];
+  clearAll(){
+    this.puzzleGridString = "";
+    for(var i = 0; i < this.puzzleWidth; i++){
+      for(var j = 0; j < this.puzzleHeight; j++){
+        this.puzzleGridString = this.puzzleGridString + ".";
       }
     }
-    for(var i = 0; i < this.gridElems.length; i++){
-      if(this.gridElems[i].classList!.contains("inactive") ){
-        continue;
-      }
-      var elemInfo = this.gridElems[i].getAttribute("info")!.split(/[A-Z]/);
-      if(elemInfo.length == 3){
-        elemInfo[1] = "A" + elemInfo[1];
-        elemInfo[2] = "D" + elemInfo[2];
-      }
-      if(elemInfo.includes(clueId)){
-        console.log(elemInfo);
-        this.gridElems[i].classList.add("complement");
-      }
-    }
-
+    this.buildTable();
   }
 
-  setClueHighlightFromElem(elem: HTMLElement){
-    document.getElementsByClassName("clue-focus")[0].classList.remove("clue-focus");
-    var clueElem;
-    if(this.focusAcross){
-      clueElem = document.getElementById("A" + this.getAcrossFromElem(elem));
-      clueElem!.classList.add("clue-focus");
-      this.setClueHeader(<HTMLElement> clueElem);
+  clearLetters(){
+    var newGridString = "";
+    for(var i = 0; i < this.puzzleGridString.length; i++){
+      if(this.puzzleGridString[i] == "#"){
+        newGridString = newGridString + "#";
+      }
+      else {
+        newGridString = newGridString + ".";
+      }
     }
-    else{
-      clueElem = document.getElementById("D" + this.getDownFromElem(elem));
-    }
-    clueElem!.classList.add("clue-focus");
-    this.setClueHeader(<HTMLElement> clueElem);
-    clueElem!.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+    this.puzzleGridString = newGridString;
+    this.buildTable();
   }
 
-  populateClues(){
-    var acrossCluesList = this.puzzle!.acrossClues.split(";");
-    var downCluesList = this.puzzle!.downClues.split(";");
-    this.makeClueObjects(<HTMLElement> document.getElementById('across-clues-listing'), acrossCluesList, "across-clue");
-    this.makeClueObjects(<HTMLElement> document.getElementById('down-clues-listing'), downCluesList, "down-clue");
-
-    document.getElementsByClassName("clue")![0].classList.add("clue-focus");
-  }
-
-  hideClues(){
-    var clueDOMs = document.getElementsByClassName('clue');
-    for(var i = 0; i < clueDOMs.length; i++){
-      clueDOMs[i].classList.add("hidden");
+  clearMirrorSelect(){
+    for(var i = 0; i < document.getElementsByClassName("mirror-type").length; i++){
+      document.getElementsByClassName("mirror-type")[i].classList.remove("selected");
     }
   }
 
-  unhideClues(){  
-    var clueDOMs = document.getElementsByClassName('clue');
-    for(var i = 0; i < clueDOMs.length; i++){
-      clueDOMs[i].classList.remove("hidden");
-    }
-  }
-
-  setClueHeader(clueElem?: HTMLElement){
-    if(clueElem == undefined){
-      document.getElementById("clue-header-number")!.innerHTML = ""; 
-      document.getElementById("clue-header-text")!.innerHTML = "";
-    }
-    else{
-      if(clueElem.classList.contains("clue-number") || clueElem.classList.contains("clue-text")){
-        clueElem = <HTMLElement> clueElem.parentElement;
-      }
-      document.getElementById("clue-header-number")!.innerHTML = (<HTMLElement> clueElem.childNodes[0]).innerHTML + clueElem.id[0]; 
-      var clueText = (<HTMLElement> clueElem.childNodes[1]).innerHTML;
-      document.getElementById("clue-header-text")!.innerHTML = clueText;
-      if(clueText.includes("-Across") || clueText.includes("-Down")){
-        this.complementaryHighlights(clueText);
-      }
-    }
-  }
-
-  makeClueObjects(listObj: HTMLElement, clueList: string[], className: string){
-    for(var i = 0; i < clueList.length; i++){
-      var clueDOM = document.createElement('div');
-      var clueNumberDOM = document.createElement('div');
-      clueNumberDOM.classList.add("clue-number");
-      var clueTextDOM = document.createElement('div');
-      clueTextDOM.classList.add("clue-text");
-      clueDOM.classList.add("clue");
-      clueDOM.classList.add(className);
-      clueTextDOM.innerHTML = clueList[i];
-      clueDOM.appendChild(clueNumberDOM);
-      clueDOM.appendChild(clueTextDOM);
-
-      clueDOM.addEventListener("mousedown", (event) => {
-        var targetElem = <HTMLElement> event.target;
-        if(targetElem!.classList!.contains("clue-number") || targetElem!.classList!.contains("clue-text")){
-          targetElem = <HTMLElement> targetElem!.parentElement;
-        }
-        document.getElementsByClassName("clue-focus")[0].classList.remove("clue-focus");
-        targetElem.classList.add("clue-focus");
-        this.setFocusClue(<HTMLElement> event.target);
-        this.setClueHeader(<HTMLElement> event.target);
-      });
-
-      listObj.appendChild(clueDOM);
-    }
-  }
-
-  setFocusClue(elem: HTMLElement){
-    if(elem!.classList!.contains("clue-number") || elem!.classList!.contains("clue-text")){
-      elem = <HTMLElement> elem.parentElement;
-    }  
-    this.focusAcross = (elem.id[0] == "A");
-    
-    for(var i = 0; i < this.gridElems.length; i++){
-      if(!this.gridElems[i].classList!.contains("inactive") && this.gridElems[i].getAttribute("info")!.includes(elem!.id)){
-        this.highlightWord(this.gridElems[i]);
-        return;
-      }
+  clearConstructSelect(){
+    for(var i = 0; i < document.getElementsByClassName("construct-type").length; i++){
+      document.getElementsByClassName("construct-type")[i].classList.remove("selected");
     }
   }
 
@@ -266,35 +186,50 @@ export class PuzzleComponent implements OnInit, AfterViewInit {
     return +down;
   }
 
+  clearTable() {
+    this.gridElems = [];
+    var tableDOM: HTMLElement | null = document.getElementById('crossword-table');
+    while (tableDOM!.firstChild) {
+        tableDOM!.removeChild(tableDOM!.firstChild);
+    }
+  }
+
   buildTable(){
+    this.clearTable();
     var tableDOM: HTMLElement | null = document.getElementById('crossword-table');
     var acrossCount: number = 0;
     var downCount: number = 0;
     var clueCount: number = 0;
 
-    var rowCount: number = this.puzzle?.height ?? 0;
+    var rowCount: number = this.puzzleHeight ?? 0;
     var index = -1;
     for(var i = 0; i < rowCount; i++){
       var rowDOM = document.createElement('tr');
-      var columnCount: number = this.puzzle?.width ?? 0;
+      var columnCount: number = this.puzzleWidth ?? 0;
       for(var j = 0; j < columnCount; j++){
         index++;
         var squareDOM = document.createElement('th');
-        if(this.puzzle?.grid[index] == "#"){
-          squareDOM.classList.add("inactive");
-          this.gridElems.push(squareDOM);
-          rowDOM.appendChild(squareDOM);
-          continue;
-        }
-        if(this.puzzle?.grid[index].includes(",")){
-          squareDOM.classList.add("shaded");
-        }
-
         var numberLabel: number = 0;
         var acrossVal: number = 0;
         var downVal: number = 0;
 
-        if((j == 0 || this.puzzle?.grid[index-1] == "#") && (i == 0 || this.puzzle?.grid[index-columnCount] == "#")){
+        if(this.puzzleGridString[index] == "#"){
+          squareDOM.classList.add("inactive");
+          this.gridElems.push(squareDOM);
+          squareDOM.addEventListener("click", (event) => {
+            var targetElem = <HTMLElement> event.target;
+            if(this.constructMode == "build"){
+              this.mirrorSelection(targetElem);
+              this.populateUserGridString();
+              this.buildTable();
+              return;
+            }
+          })
+          rowDOM.appendChild(squareDOM);
+          continue;
+        }
+
+        if((j == 0 || this.puzzleGridString[index-1] == "#") && (i == 0 || this.puzzleGridString[index-columnCount] == "#")){
           clueCount = clueCount + 1;
           acrossVal = clueCount;
           downVal = clueCount;
@@ -318,7 +253,7 @@ export class PuzzleComponent implements OnInit, AfterViewInit {
           }
         }
         else{
-          if(j == 0 || this.puzzle?.grid[index-1] == "#"){
+          if(j == 0 || this.puzzleGridString[index-1] == "#"){
             clueCount = clueCount + 1;
             acrossVal = clueCount;
             downVal = this.getDownFromElem(this.gridElems[this.gridElems.length - columnCount]);
@@ -333,7 +268,7 @@ export class PuzzleComponent implements OnInit, AfterViewInit {
               }
             }
           }
-          else if(i == 0 || this.puzzle?.grid[index-columnCount] == "#"){
+          else if(i == 0 || this.puzzleGridString[index-columnCount] == "#"){
             clueCount = clueCount + 1;
             downVal = clueCount;
             acrossVal = this.getAcrossFromElem(this.gridElems[this.gridElems.length-1]);
@@ -357,21 +292,25 @@ export class PuzzleComponent implements OnInit, AfterViewInit {
 
 
         squareDOM.addEventListener("click", (event) => {
-          if(this.paused == true){
-            return;
-          }
           var targetElem = <HTMLElement> event.target;
           if(targetElem!.classList.contains("number-label") || targetElem!.classList.contains("grid-letter")){
             targetElem = <HTMLElement> targetElem!.parentElement;
           }
+          if(this.constructMode == "build"){
+            this.mirrorSelection(targetElem);
+            //targetElem!.classList.add("inactive");
+            //(<HTMLElement> targetElem.childNodes[1]).innerHTML = "#"; //might not want to it have this as the inner html when you can just change it on the grid string and have it not appear and may later be easier to get rid of
+            this.populateUserGridString();
+            this.buildTable();
+            return;
+          }
+
+
           if(targetElem.classList.contains("focus")){
             this.focusAcross = !this.focusAcross;
           }
           this.highlightWord(targetElem);
-          this.setClueHighlightFromElem(targetElem);
         })
-
-
 
         var numberLabelDiv = document.createElement('div');
         numberLabelDiv.classList.add("number-label");
@@ -383,9 +322,9 @@ export class PuzzleComponent implements OnInit, AfterViewInit {
         var letterDiv = document.createElement('div');
         letterDiv.classList.add("grid-letter");
         squareDOM.appendChild(letterDiv);
-
-
-
+        if(this.puzzleGridString[index] != "." && this.puzzleGridString[index] != ","){
+          (<HTMLElement> squareDOM.childNodes[1]).innerHTML = this.puzzleGridString[index];
+        }
 
         //add elements to their places in dom and in code
         this.gridElems.push(squareDOM);
@@ -398,7 +337,6 @@ export class PuzzleComponent implements OnInit, AfterViewInit {
     while(this.gridElems[i].classList.contains("inactive")){
       i = i + 1;
     }
-    this.highlightWord(this.gridElems[i]);
 
     var gridBoxHeight = (550 - ((rowCount*4) - 2)) / rowCount;
     gridBoxHeight = Math.round(gridBoxHeight);
@@ -415,42 +353,6 @@ export class PuzzleComponent implements OnInit, AfterViewInit {
       (<HTMLElement> numberLabelList[i]).style.top = gridBoxNumTop + "px";
     }
 
-    var gridCookieName = "userGrid" + this.puzzleId + "=";
-    var decodedCookie = decodeURIComponent(document.cookie);
-    var ca = decodedCookie.split(';');
-    for(let i = 0; i < ca.length; i++) {
-      var c = ca[i];
-      while (c.charAt(0) == ' ') {
-        c = c.substring(1);
-      }
-      if (c.indexOf(gridCookieName) == 0) {
-        this.userGridString = c.substring(gridCookieName.length, c.length);
-      }
-    }
-
-    this.userGridString = this.getCookie("userGrid" + this.puzzleId);
-    for(var i = 0; i < this.userGridString.length; i++){
-      if(this.userGridString[i] != "."){
-        (<HTMLElement> this.gridElems[i].childNodes[1]).innerHTML = this.userGridString[i];
-      }
-    }
-
-  }
-
-  getCookie(cookieName : String){
-    var gridCookieName = cookieName + "=";
-    var decodedCookie = decodeURIComponent(document.cookie);
-    var ca = decodedCookie.split(';');
-    for(let i = 0; i < ca.length; i++) {
-      var c = ca[i];
-      while (c.charAt(0) == ' ') {
-        c = c.substring(1);
-      }
-      if (c.indexOf(gridCookieName) == 0) {
-        return c.substring(gridCookieName.length, c.length);
-      }
-    }
-    return "";
   }
 
   findNextOpen(){
@@ -472,13 +374,88 @@ export class PuzzleComponent implements OnInit, AfterViewInit {
       while(x < this.gridElems.length && !this.gridElems[x].classList.contains("focus")){
         x = x + 1;
       }
-      x = x + this.puzzle!.grid!.length;
+      x = x + this.puzzleWidth!;
       while(x < this.gridElems.length && this.gridElems[x].classList.contains("inactive")){
-        x = x + this.puzzle!.grid!.length;
+        x = x + this.puzzleWidth!;
       }
       if(x < this.gridElems!.length){
         this.highlightWord(this.gridElems[x]);
       }
+    }
+  }
+
+  mirrorSelection(elem: HTMLElement){
+    var elementIndex = -1;
+    for(var i = 0; i < this.gridElems.length; i++){
+      if(this.gridElems[i] == elem){
+        elementIndex = i;
+      }
+    }
+    this.switchInactive(this.gridElems[elementIndex]);
+    if(this.mirrorMode == "x-axis"){
+      if(((this.puzzleHeight-1) - Math.floor(elementIndex / this.puzzleWidth)) == Math.floor(this.puzzleHeight / 2)){
+        return;
+      }
+      var mirrorIndex = (elementIndex % this.puzzleWidth) + (((this.puzzleHeight-1) - Math.floor(elementIndex / this.puzzleWidth))*this.puzzleWidth);
+      this.switchInactive(this.gridElems[mirrorIndex]);
+    }
+    else if(this.mirrorMode == "y-axis"){
+      if((elementIndex % this.puzzleWidth) == (Math.floor(this.puzzleWidth / 2))){
+        return;
+      }
+      var mirrorIndex = ((this.puzzleWidth-1) - (elementIndex % this.puzzleWidth)) + (Math.floor(elementIndex / this.puzzleHeight) * this.puzzleHeight);
+      this.switchInactive(this.gridElems[mirrorIndex]);
+    }
+    else if(this.mirrorMode == "xy-axis"){
+      var ymirror = -1;
+      if((elementIndex % this.puzzleWidth) != (Math.floor(this.puzzleWidth / 2))){
+        var mirrorIndex = ((this.puzzleWidth-1) - (elementIndex % this.puzzleWidth)) + (Math.floor(elementIndex / this.puzzleHeight) * this.puzzleHeight);
+        this.switchInactive(this.gridElems[mirrorIndex]);
+        ymirror = mirrorIndex;
+      }
+      if(((this.puzzleHeight-1) - Math.floor(elementIndex / this.puzzleWidth)) != Math.floor(this.puzzleHeight / 2)){
+        var mirrorIndex = (elementIndex % this.puzzleWidth) + (((this.puzzleHeight-1) - Math.floor(elementIndex / this.puzzleWidth))*this.puzzleWidth);
+        this.switchInactive(this.gridElems[mirrorIndex]);
+      }
+      if(((this.puzzleHeight-1) - Math.floor(ymirror / this.puzzleWidth)) != Math.floor(this.puzzleHeight / 2) && ymirror != -1){
+        console.log(ymirror);
+        var ymirrorIndex = (ymirror % this.puzzleWidth) + (((this.puzzleHeight-1) - Math.floor(ymirror / this.puzzleWidth))*this.puzzleWidth);
+        console.log(ymirrorIndex);
+        this.switchInactive(this.gridElems[ymirrorIndex]);
+      }
+    }
+    else if(this.mirrorMode == "rotational"){
+      if(elementIndex == ((this.puzzleWidth * this.puzzleHeight)-1)/2){
+        return;
+      }
+      var q1x = Math.floor(elementIndex / this.puzzleHeight);
+      var q1y = (elementIndex % this.puzzleHeight);
+      var q1Index = (this.puzzleWidth * (q1x)) + (q1y);
+      var q2Index = (this.puzzleWidth * (q1y)) + (this.puzzleHeight - 1 - q1x);
+      var q3Index = (this.puzzleWidth * (this.puzzleWidth - 1 - q1x)) + (this.puzzleHeight - 1 - q1y);
+      var q4Index = (this.puzzleWidth * (this.puzzleWidth - 1 - q1y)) + (q1x);
+      this.switchInactive(this.gridElems[q2Index]);
+      this.switchInactive(this.gridElems[q3Index]);
+      this.switchInactive(this.gridElems[q4Index]);
+    }
+    else if(this.mirrorMode == "diagonal"){
+      if(elementIndex == ((this.puzzleWidth * this.puzzleHeight)-1)/2){
+        return;
+      }
+      var primaryX = Math.floor(elementIndex / this.puzzleHeight);
+      var primaryY = (elementIndex % this.puzzleHeight);
+      var primaryIndex = (this.puzzleWidth * (primaryX)) + (primaryY);
+      var diagonalIndex = (this.puzzleWidth * (this.puzzleWidth - 1 - primaryX)) + (this.puzzleHeight - 1 - primaryY);
+      this.switchInactive(this.gridElems[diagonalIndex]);
+    }
+  }
+
+  switchInactive(elem: HTMLElement){
+    if(elem!.classList.contains("inactive")){
+      elem!.classList.remove("inactive");
+    }
+    else{
+      elem!.classList.add("inactive");
     }
   }
 
@@ -503,21 +480,23 @@ export class PuzzleComponent implements OnInit, AfterViewInit {
   }
 
   populateUserGridString(){
-    this.userGridString = "";
+    this.puzzleGridString = "";
     for(var i = 0; i < this.gridElems.length; i++){
-      if(this.gridElems[i].hasChildNodes()){
+      if(this.gridElems[i].classList.contains("inactive")){
+        this.puzzleGridString = this.puzzleGridString + "#";
+      }
+      else if(this.gridElems[i].hasChildNodes()){
         if((<HTMLElement> this.gridElems[i].childNodes[1]).innerHTML != ""){
-          this.userGridString = this.userGridString + (<HTMLElement> this.gridElems[i].childNodes[1]).innerHTML;
+          this.puzzleGridString = this.puzzleGridString + (<HTMLElement> this.gridElems[i].childNodes[1]).innerHTML;
         }
         else {
-          this.userGridString = this.userGridString + ".";
+          this.puzzleGridString = this.puzzleGridString + ".";
         }
       }
-      else{
-        this.userGridString = this.userGridString + ".";
+      else {
+        this.puzzleGridString = this.puzzleGridString + ".";
       }
     }
-    document.cookie="userGrid"+ this.puzzleId + "=" + this.userGridString;
   }
 
   nextOpenSpaceInCurrentClue(elem: HTMLElement){
@@ -581,12 +560,10 @@ export class PuzzleComponent implements OnInit, AfterViewInit {
         lastValid = x;
       }
       this.highlightWord(this.gridElems[lastValid]);
-      this.setClueHighlightFromElem(this.gridElems[lastValid]);
     }
     else{
       this.focusAcross = !this.focusAcross;
       this.highlightWord(<HTMLElement> document.getElementsByClassName("focus")[0]);
-      this.setClueHighlightFromElem(<HTMLElement> document.getElementsByClassName("focus")[0]);
     }
   }
 
@@ -599,26 +576,24 @@ export class PuzzleComponent implements OnInit, AfterViewInit {
         x = x + 1;
         lastValid = x;
       }
-      x = x - this.puzzle!.grid!.length;
+      x = x - this.puzzleWidth!;
       while(x > 0 && this.gridElems[x].classList.contains("inactive")){
-        x = x - this.puzzle!.grid!.length;
+        x = x - this.puzzleWidth!;
       }
       if(x >= 0 && !this.gridElems[x].classList.contains("inactive")){
         lastValid = x;
       }
       this.highlightWord(<HTMLElement> this.gridElems[lastValid]);
-      this.setClueHighlightFromElem(<HTMLElement> this.gridElems[lastValid]);
     }
     else{
       this.focusAcross = !this.focusAcross; 
       this.highlightWord(<HTMLElement> document.getElementsByClassName("focus")![0]);
-      this.setClueHighlightFromElem(<HTMLElement> document.getElementsByClassName("focus")![0]);
     }
   }
 
   @HostListener('document:keydown', ['$event'])
   handleKeyboardEvent(event: KeyboardEvent) {
-    if(this.paused == true){
+    if(this.constructMode == "build"){
       return;
     }
     if(["Space","ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Tab"].indexOf(event.code) > -1) {
@@ -634,21 +609,14 @@ export class PuzzleComponent implements OnInit, AfterViewInit {
       if(nextSpace == null){
         var nextClue = this.findNextClue(<HTMLElement> document.getElementsByClassName("focus")[0]);
         if(nextClue == null){
-          this.checkAnswers();
-          if(this.puzzleComplete){
-            (<HTMLElement> document.getElementById("timer"))!.style.color = "rgb(114, 148, 130)";
-            (<HTMLElement> document.getElementById("timer"))!.style.fontWeight = "bold";
-            window.clearTimeout(this.timer);
-          }
           return;
         }
         this.highlightWord(<HTMLElement> nextClue);
-        this.setClueHighlightFromElem(<HTMLElement> nextClue);
       }
       else{
         this.highlightWord(<HTMLElement> nextSpace);
-        this.setClueHighlightFromElem(<HTMLElement> nextSpace);
       }
+      this.populateUserGridString();
     }
     if(event.keyCode == 8 || event.keyCode == 46){
       if((<HTMLElement> document.getElementsByClassName("focus")[0].childNodes[1]).innerHTML != ""){
@@ -672,19 +640,17 @@ export class PuzzleComponent implements OnInit, AfterViewInit {
         while(x < gridLength && !this.gridElems[x].classList.contains("focus")){
           x = x + 1;
         }
-        x = x + this.puzzle!.grid!.length;
+        x = x + this.puzzleWidth!;
         while(x < gridLength && this.gridElems[x].classList.contains("inactive")){
-          x = x + this.puzzle!.grid!.length;
+          x = x + this.puzzleWidth!;
         }
         if(x < gridLength){
           this.highlightWord(<HTMLElement> this.gridElems[x]);
-          this.setClueHighlightFromElem(<HTMLElement> this.gridElems[x]);
         }
       }
       else{
         this.focusAcross = !this.focusAcross;
         this.highlightWord(<HTMLElement> document.getElementsByClassName("focus")[0]);
-        this.setClueHighlightFromElem(<HTMLElement> document.getElementsByClassName("focus")[0]);
       }
     }
     //Up
@@ -708,13 +674,11 @@ export class PuzzleComponent implements OnInit, AfterViewInit {
         }
         if(x < gridLength){
           this.highlightWord(this.gridElems[x]);
-          this.setClueHighlightFromElem(this.gridElems[x]);
         }
       }
       else{
         this.focusAcross = !this.focusAcross;
         this.highlightWord(<HTMLElement> document.getElementsByClassName("focus")[0]);
-        this.setClueHighlightFromElem(<HTMLElement> document.getElementsByClassName("focus")[0]);
       }
     }
     //Tab
@@ -725,7 +689,6 @@ export class PuzzleComponent implements OnInit, AfterViewInit {
       var nextClue = this.findNextClue(<HTMLElement> document.getElementsByClassName("focus")[0]);
       if(nextClue != null){
         this.highlightWord(<HTMLElement> nextClue);
-        this.setClueHighlightFromElem(<HTMLElement> nextClue);
       }
       else {
         this.focusAcross = !this.focusAcross;
@@ -733,48 +696,11 @@ export class PuzzleComponent implements OnInit, AfterViewInit {
         nextClue = this.findNextClue(<HTMLElement> document.getElementsByClassName("focus")[0]);
         if(nextClue != null){
           this.highlightWord(<HTMLElement> nextClue);
-          this.setClueHighlightFromElem(<HTMLElement> nextClue);
         }
       }
     }
-    this.populateUserGridString();
   }
 
-  checkAnswers(){
-    var keyLength = this.puzzle!.key!.length ?? 0;
-    for(var x = 0; x < keyLength; x++){
-      if(this.puzzle!.key![x] == "#"){
-        continue;
-      }
-      if(this.puzzle!.key![x].replace(".","") != (<HTMLElement> this.gridElems[x].childNodes[1]).innerHTML){
-        return;
-      }
-    }
-    this.puzzleComplete = true;
-  }
-
-  setTimer(time: number) {
-    var timeVal = time;
-    var minutes = Math.floor(timeVal / 60);
-    var seconds = Math.floor(timeVal % 60);
-
-    document.getElementById('timer')!.innerHTML = (minutes + ":" + seconds.toLocaleString('en-US', {
-      minimumIntegerDigits: 2,
-      useGrouping: false
-    }));
-    
-  }
-
-  counter() {
-    this.totalTime = this.totalTime + 0.1;
-
-    this.setTimer(Math.floor(this.totalTime));
-    document.cookie = "timer" + this.puzzleId + "=" + this.totalTime;
-
-    this.timer = setTimeout( () => {
-      this.counter();
-    }, 100);
-  }
 
 
 }
