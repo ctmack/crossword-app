@@ -38,6 +38,7 @@ export class PuzzleComponent implements OnInit, AfterViewInit {
 
   ngOnInit(): void {
     document.getElementById("nav-table")!.style.display="none";
+    document.getElementById("create-button")!.style.display="none";
     this.route.paramMap.pipe(
       switchMap((params: ParamMap) =>
         params.get('id')!
@@ -53,6 +54,7 @@ export class PuzzleComponent implements OnInit, AfterViewInit {
   ngOnDestroy(): void {
     clearTimeout(this.timer);
     document.getElementById("nav-table")!.style.display="block";
+    document.getElementById("create-button")!.style.display="block";
     (<HTMLElement> document.getElementById("headline-sub-title")).innerHTML = "";
   }
 

@@ -29,6 +29,7 @@ export class CreateComponent implements OnInit, AfterViewInit {
 
   ngOnInit(): void {
     document.getElementById("nav-table")!.style.display="none";
+    document.getElementById("create-button")!.style.display="none";
     for(var i = 0; i < this.puzzleWidth; i++){
       for(var j = 0; j < this.puzzleHeight; j++){
         this.puzzleGridString = this.puzzleGridString + ".";
@@ -38,6 +39,7 @@ export class CreateComponent implements OnInit, AfterViewInit {
 
   ngOnDestroy(): void {
     document.getElementById("nav-table")!.style.display="block";
+    document.getElementById("create-button")!.style.display="block";
     (<HTMLElement> document.getElementById("headline-sub-title")).innerHTML = "";
   }
 
