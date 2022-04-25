@@ -51,7 +51,10 @@ export class CreateComponent implements OnInit, AfterViewInit {
     for(var i = 0; i < document.getElementsByClassName("mirror-type").length; i++){
       document.getElementsByClassName("mirror-type")[i].addEventListener("click", (event) => {
         var targetElem = <HTMLElement> event.target;
-        this.mirrorMode = targetElem.innerHTML.toLowerCase();
+        if(targetElem!.classList.contains("mirror-name") || targetElem!.classList.contains("mirror-img")){
+          targetElem = <HTMLElement> targetElem!.parentElement;
+        }
+        this.mirrorMode = (<HTMLElement> targetElem.childNodes[0]).innerHTML.toLowerCase();
         this.clearMirrorSelect();
         targetElem.classList.add("selected");
       })
@@ -60,12 +63,15 @@ export class CreateComponent implements OnInit, AfterViewInit {
     document.getElementById("construct-fill-button")!.addEventListener("click", (event) => {
       var targetElem = <HTMLElement> event.target;
       document.getElementById("build-section")!.classList.add("hidden");
+      document.getElementById("fill-section")!.classList.remove("hidden");
       this.clearConstructSelect();
       targetElem.classList.add("selected");
       this.constructMode = "fill";
+      this.findFirstOpen();
     });
     document.getElementById("construct-build-button")!.addEventListener("click", (event) => {
       document.getElementById("build-section")!.classList.remove("hidden");
+      document.getElementById("fill-section")!.classList.add("hidden");
       var targetElem = <HTMLElement> event.target;
       this.mirrorMode = targetElem.innerHTML.toLowerCase();
       this.clearMirrorSelect();
@@ -73,10 +79,11 @@ export class CreateComponent implements OnInit, AfterViewInit {
       document.getElementsByClassName("mirror-type")[0].classList.add("selected");
       targetElem.classList.add("selected");
       this.constructMode = "build";
+      this.buildTable();
     })
 
-    this.constructMode = document.getElementsByClassName("construct-type")[0].innerHTML.toLowerCase();
-    document.getElementsByClassName("construct-type")[0].classList.add("selected");
+    this.constructMode = document.getElementById("construct-fill-button")!.innerHTML.toLowerCase();
+    document.getElementById("construct-fill-button")!.classList.add("selected");
     if(this.constructMode != "fill"){
       document.getElementsByClassName("mirror-type")[0].classList.add("selected");
       this.mirrorMode = document.getElementsByClassName("mirror-type")[0].innerHTML.toLowerCase();
@@ -305,7 +312,6 @@ export class CreateComponent implements OnInit, AfterViewInit {
             return;
           }
 
-
           if(targetElem.classList.contains("focus")){
             this.focusAcross = !this.focusAcross;
           }
@@ -353,6 +359,32 @@ export class CreateComponent implements OnInit, AfterViewInit {
       (<HTMLElement> numberLabelList[i]).style.top = gridBoxNumTop + "px";
     }
 
+    if(this.constructMode == "fill"){
+      this.highlightWord(this.gridElems[0]);
+    }
+
+  }
+
+  findFirstOpen(){
+    if(this.focusAcross){
+      var x = 0;
+      while(x < this.gridElems.length && (this.gridElems[x].classList.contains("inactive") || (<HTMLElement> this.gridElems[x].childNodes[1]).innerHTML != "")){
+        x = x + 1;
+      }
+      console.log(x);
+      if(x < this.gridElems!.length){
+        this.highlightWord(this.gridElems[x]);
+      }
+    }
+    else{
+      var x = 0;
+      while(x < this.gridElems.length && (this.gridElems[x].classList.contains("inactive") || (<HTMLElement> this.gridElems[x].childNodes[1]).innerHTML != "")){
+        x = x + this.puzzleWidth!;
+      }
+      if(x < this.gridElems!.length){
+        this.highlightWord(this.gridElems[x]);
+      }
+    } 
   }
 
   findNextOpen(){

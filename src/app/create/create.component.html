@@ -7,33 +7,59 @@
 			</div>
 		</div>
 		<div style="width:600px;">
-			<div id="construct-select">
-				<div id="construct-fill-button" class="construct-type">Fill</div>
-				<div id="construct-build-button" class="construct-type">Build</div>
+			<table id="construct-controls">
+				<tr id="construct-select">
+					<td id="construct-fill-button" class="construct-button construct-type">Fill</td>
+					<td id="construct-build-button" class="construct-button construct-type">Build</td>
+				</tr>
+				<tr id="reset-buttons">
+					<td id="clear-letters-button" class="construct-button">Clear Letters</td>
+					<td id="clear-all-button" class="construct-button">Clear All</td>
+				</tr>
+			</table>
+			<div id="fill-section">
+				<!--<div>Possible Fill Words</div>-->
+				<div id="word-list"></div>
 			</div>
-			<div id="reset-buttons">
-				<div id="clear-letters-button">Clear Letters</div>
-				<div id="clear-all-button">Clear All</div>
-			</div>
-			<div id="fill-section"></div>
-			<div id="build-section" class="hidden">
+			<div id="build-section" class="hidden" style="text-align:left;">
 				<div id="mirror-select">
-					<div class="mirror-type">Freeform</div>
-					<div class="mirror-type">X-Axis</div>
-					<div class="mirror-type">Y-Axis</div>
-					<div class="mirror-type">XY-Axis</div>
-					<div class="mirror-type">Rotational</div>
-					<div class="mirror-type">Diagonal</div>
+					<div class="build-title">Build Design Mirroring</div>
+					<div class="mirror-type">
+						<div class="mirror-name">Freeform</div>
+						<img class="mirror-img" style="height: 50px" src="./../../assets/freeform.png"/>
+					</div>
+					<div class="mirror-type">
+						<div class="mirror-name">X-Axis</div>
+						<img class="mirror-img" style="height: 50px" src="./../../assets/mirror-x-axis.png"/>
+					</div>
+					<div class="mirror-type">
+						<div class="mirror-name">Y-Axis</div>
+						<img class="mirror-img" style="height: 50px" src="./../../assets/mirror-y-axis.png"/>
+					</div>
+					<div class="mirror-type">
+						<div class="mirror-name">XY-Axis</div>
+						<img class="mirror-img" style="height: 50px" src="./../../assets/mirror-xy-axis.png"/>
+					</div>
+					<div class="mirror-type">
+						<div class="mirror-name">Rotational</div>
+						<img class="mirror-img" style="height: 50px" src="./../../assets/mirror-rotate.png"/>
+					</div>
+					<div class="mirror-type">
+						<div class="mirror-name">Diagonal</div>
+						<img class="mirror-img" style="height: 50px" src="./../../assets/mirror-diagonal.png"/>
+					</div>
 				</div>
 				<div id="specifications">
-					<div id="full-sizes">
-						<div id="preset-15">15 x 15</div>
-						<div id="preset-21">21 x 21</div>
+					<div class="size-selector" id="full-sizes">
+						<div class="build-title">Grid Sizes</div>
+						<div class="size-button" id="preset-15"><div style="margin: auto;">15 x 15</div></div>
+						<div class="size-button" id="preset-21"><div style="margin: auto;">21 x 21</div></div>
 					</div>
-					<div id="mini-sizes">
-						<div id="preset-5">5 x 5</div>
-						<div id="preset-6">6 x 6</div>
-						<div id="preset-8">8 x 8</div>
+					<div class="size-selector" id="mini-sizes">
+						<div class="build-title">Grid Mini Sizes</div>
+						<div class="size-button" id="preset-5"><div style="margin: auto;">5 x 5</div></div>
+						<div class="size-button" id="preset-6"><div style="margin: auto;">6 x 6</div></div>
+						<div class="size-button" id="preset-8"><div style="margin: auto;">8 x 8</div></div>
 					</div>
 				</div>
 			</div>
