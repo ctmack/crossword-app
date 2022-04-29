@@ -3,6 +3,7 @@ import { AppRoutingModule } from './../app-routing.module'
 import { Puzzle } from '../puzzle';
 import { Router, ActivatedRoute, ParamMap } from '@angular/router';
 import { PuzzleService } from '../puzzle.service';
+import { RespWord } from '../resp-word';
 import { switchMap } from 'rxjs/operators';
 
 @Component({
@@ -70,6 +71,7 @@ export class CreateComponent implements OnInit, AfterViewInit {
       targetElem.classList.add("selected");
       this.constructMode = "fill";
       this.findFirstOpen();
+      this.setFillWords();
     });
     document.getElementById("construct-build-button")!.addEventListener("click", (event) => {
       document.getElementById("build-section")!.classList.remove("hidden");
@@ -125,6 +127,71 @@ export class CreateComponent implements OnInit, AfterViewInit {
     })
   }
 
+  setFillWords(){
+    var segment = "";
+    for(var x = 0; x < this.puzzleGridString.length; x++){
+      if(this.gridElems[x].classList.contains("focus") || this.gridElems[x].classList.contains("focus-word")){
+        if(this.puzzleGridString[x] == "."){
+          segment = segment + "?";
+        }
+        else{
+          segment = segment + this.puzzleGridString[x];
+        }
+      }
+    }
+    console.log(segment);
+    const listDOM = document.getElementById('word-list');
+    while (listDOM!.firstChild) {
+      listDOM!.removeChild(listDOM!.firstChild);
+    }
+    this.getWords(segment).then(words => {
+      var wordL : string[] = words.map(u => u.word.toString());
+      var x = 0;
+      var count = 0;
+      while(x < wordL.length && count < 20){
+        var wordString = (<String> wordL[x]).toUpperCase()
+        if(/^[a-zA-Z]+$/.test(wordString)){
+          var wordDOM = document.createElement('div');
+          wordDOM!.innerHTML = wordString;
+          wordDOM.classList.add("fill-word");
+          wordDOM.addEventListener("click", (event) => {
+            var targetElem = <HTMLElement> event.target;
+            var wordIndex = 0;
+            for(var i = 0; i < this.gridElems.length; i++){
+              if(this.gridElems[i].classList.contains("focus") || this.gridElems[i].classList.contains("focus-word")){
+                (<HTMLElement> this.gridElems[i].childNodes[1]).innerHTML = targetElem.innerHTML[wordIndex];
+                wordIndex = wordIndex + 1;
+                if(wordIndex >= targetElem.innerHTML.length){break;}
+              }
+            }
+
+            var nextClue = this.findNextClue(<HTMLElement> document.getElementsByClassName("focus")[0]);
+            if(nextClue == null){
+              return;
+            }
+            this.highlightWord(<HTMLElement> nextClue);
+            this.populateUserGridString();
+            this.setFillWords();
+
+          })
+          listDOM!.append(wordDOM);
+          count = count + 1;
+        }
+        x = x + 1;
+      }
+    });
+  }
+
+
+  getWords(segment: String): Promise<RespWord[]> {
+    return fetch('https://api.datamuse.com/words?sp=' + segment).then(res => res.json()).then(res => {return res as RespWord[]});
+  }
+
+  highlightWordAndSetFillWords(elem: HTMLElement) {
+    this.highlightWord(elem);
+    this.setFillWords();
+  }
+
   highlightWord(elem: HTMLElement) {
     for(var x = 0; x < this.gridElems.length; x++){
       this.gridElems[x].classList.remove("focus");
@@ -163,6 +230,7 @@ export class CreateComponent implements OnInit, AfterViewInit {
     }
     this.puzzleGridString = newGridString;
     this.buildTable();
+    this.findFirstOpen();
   }
 
   clearMirrorSelect(){
@@ -299,7 +367,6 @@ export class CreateComponent implements OnInit, AfterViewInit {
         }
         squareDOM.setAttribute('info', "A" + acrossVal + "D" + downVal);
 
-
         squareDOM.addEventListener("click", (event) => {
           var targetElem = <HTMLElement> event.target;
           if(targetElem!.classList.contains("number-label") || targetElem!.classList.contains("grid-letter")){
@@ -318,6 +385,7 @@ export class CreateComponent implements OnInit, AfterViewInit {
             this.focusAcross = !this.focusAcross;
           }
           this.highlightWord(targetElem);
+          this.setFillWords();
         })
 
         var numberLabelDiv = document.createElement('div');
@@ -364,6 +432,7 @@ export class CreateComponent implements OnInit, AfterViewInit {
     if(this.constructMode == "fill"){
       this.highlightWord(this.gridElems[0]);
     }
+    this.setFillWords();
 
   }
 
@@ -373,7 +442,6 @@ export class CreateComponent implements OnInit, AfterViewInit {
       while(x < this.gridElems.length && (this.gridElems[x].classList.contains("inactive") || (<HTMLElement> this.gridElems[x].childNodes[1]).innerHTML != "")){
         x = x + 1;
       }
-      console.log(x);
       if(x < this.gridElems!.length){
         this.highlightWord(this.gridElems[x]);
       }
@@ -386,7 +454,7 @@ export class CreateComponent implements OnInit, AfterViewInit {
       if(x < this.gridElems!.length){
         this.highlightWord(this.gridElems[x]);
       }
-    } 
+    }
   }
 
   findNextOpen(){
@@ -452,9 +520,9 @@ export class CreateComponent implements OnInit, AfterViewInit {
         this.switchInactive(this.gridElems[mirrorIndex]);
       }
       if(((this.puzzleHeight-1) - Math.floor(ymirror / this.puzzleWidth)) != Math.floor(this.puzzleHeight / 2) && ymirror != -1){
-        console.log(ymirror);
+        //console.log(ymirror);
         var ymirrorIndex = (ymirror % this.puzzleWidth) + (((this.puzzleHeight-1) - Math.floor(ymirror / this.puzzleWidth))*this.puzzleWidth);
-        console.log(ymirrorIndex);
+        //console.log(ymirrorIndex);
         this.switchInactive(this.gridElems[ymirrorIndex]);
       }
     }
@@ -651,6 +719,7 @@ export class CreateComponent implements OnInit, AfterViewInit {
         this.highlightWord(<HTMLElement> nextSpace);
       }
       this.populateUserGridString();
+      this.setFillWords();
     }
     if(event.keyCode == 8 || event.keyCode == 46){
       if((<HTMLElement> document.getElementsByClassName("focus")[0].childNodes[1]).innerHTML != ""){
@@ -666,6 +735,8 @@ export class CreateComponent implements OnInit, AfterViewInit {
           (<HTMLElement> document.getElementsByClassName("focus")[0].childNodes[1]).innerHTML = "";
         }
       }
+      this.populateUserGridString();
+      this.setFillWords();
     }
     //Down
     if(event.keyCode == 40){
@@ -680,20 +751,24 @@ export class CreateComponent implements OnInit, AfterViewInit {
         }
         if(x < gridLength){
           this.highlightWord(<HTMLElement> this.gridElems[x]);
+          this.setFillWords();
         }
       }
       else{
         this.focusAcross = !this.focusAcross;
         this.highlightWord(<HTMLElement> document.getElementsByClassName("focus")[0]);
+        this.setFillWords();
       }
     }
     //Up
     if(event.keyCode == 38){
       this.goUp();
+      this.setFillWords();
     }
     //Left
     if(event.keyCode == 37){
       this.goLeft();
+      this.setFillWords();
     }
     //Right
     if(event.keyCode == 39){
@@ -708,11 +783,13 @@ export class CreateComponent implements OnInit, AfterViewInit {
         }
         if(x < gridLength){
           this.highlightWord(this.gridElems[x]);
+          this.setFillWords();
         }
       }
       else{
         this.focusAcross = !this.focusAcross;
         this.highlightWord(<HTMLElement> document.getElementsByClassName("focus")[0]);
+        this.setFillWords();
       }
     }
     //Tab
@@ -723,16 +800,60 @@ export class CreateComponent implements OnInit, AfterViewInit {
       var nextClue = this.findNextClue(<HTMLElement> document.getElementsByClassName("focus")[0]);
       if(nextClue != null){
         this.highlightWord(<HTMLElement> nextClue);
+        this.setFillWords();
       }
       else {
         this.focusAcross = !this.focusAcross;
         this.highlightWord(this.gridElems[0]);
+        this.setFillWords();
         nextClue = this.findNextClue(<HTMLElement> document.getElementsByClassName("focus")[0]);
         if(nextClue != null){
           this.highlightWord(<HTMLElement> nextClue);
+          this.setFillWords();
         }
       }
     }
+  }
+
+  checkStandards(){
+    var highestAcross = -1;
+    var highestDown = -1;
+
+    for(var i = 0; i < this.gridElems.length; i++){
+      var acrossNum = this.getAcrossFromElem(this.gridElems[i]);
+      if(acrossNum > highestAcross){
+        highestAcross = acrossNum;
+      }
+      var downNum = this.getDownFromElem(this.gridElems[i]);
+      if(downNum > highestDown){
+        highestDown = downNum;
+      }
+    }
+
+    var acrossWordsLengths: number[] = new Array(highestAcross);
+    var downWordsLengths: number[] = new Array(highestDown);
+
+    for(var i = 0; i < this.gridElems.length; i++){
+      var acrossNum = this.getAcrossFromElem(this.gridElems[i]);
+      if(acrossWordsLengths[acrossNum] == undefined){
+        acrossWordsLengths[acrossNum] = 0;
+      }
+      else{
+        acrossWordsLengths[acrossNum] = acrossWordsLengths[acrossNum] + 1;
+      }
+      var downNum = this.getDownFromElem(this.gridElems[i]);
+      if(downWordsLengths[downNum] == undefined){
+        downWordsLengths[downNum] = 0;
+      }
+      else{
+        downWordsLengths[downNum] = downWordsLengths[downNum] + 1;
+      }
+    }
+
+    for(var i = 0; i < acrossWordsLengths.length; i++){
+      
+    }
+
   }
 
 

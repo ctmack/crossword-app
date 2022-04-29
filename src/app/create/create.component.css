@@ -157,3 +157,31 @@
 	margin-left: 6px;
 	margin-bottom: 2px;
 }
+
+#fill-section{
+	width: 80%;
+	margin: auto;
+}
+
+#word-list{
+	margin-top: 15px;
+}
+
+#word-list div{
+	font-family: Courier;
+	height: 20px;
+	font-size: 15px;
+	line-height: 20px;
+	width: 60%;
+	margin: auto;
+}
+
+.fill-word{
+	cursor: pointer;
+
+}
+
+.fill-word:hover{
+	cursor: pointer;
+	background-color: #EEE;
+}
