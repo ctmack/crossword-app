@@ -135,3 +135,30 @@ table {
 	width: 210px;
 }
 
+#crossword-table {
+	border-spacing: 0px;
+	border: 1px solid #000;
+	cursor: pointer;
+	font-family: Arial;
+	background-color: white;
+}
+
+#crossword-table th {
+	height: 50px;
+	width: 50px;
+	border: 1px solid #000;
+}
+
+#crossword-table th.inactive{
+	background-color: black;
+	cursor: default;
+}
+
+#crossword-table th.focus{
+	background-color: rgb(235, 231, 153);
+}
+
+#crossword-table th.focus-word{
+	background-color: rgb(200, 222, 244);
+}
+
