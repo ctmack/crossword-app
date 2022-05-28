@@ -4,8 +4,9 @@ import { BrowserModule } from '@angular/platform-browser';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { PuzzleComponent } from './puzzle/puzzle.component';
+import { provideFirebaseApp, getApp, initializeApp } from '@angular/fire/app';
+import { getFirestore, provideFirestore } from '@angular/fire/firestore';
 
-import { AngularFireModule } from '@angular/fire/compat';
 import { environment } from '../environments/environment';
 import { CreateComponent } from './create/create.component';
 
@@ -18,7 +19,10 @@ import { CreateComponent } from './create/create.component';
   imports: [
     BrowserModule,
     AppRoutingModule,
-    AngularFireModule.initializeApp(environment.firebaseConfig)
+    //FireModule.initializeApp(environment.firebaseConfig),
+    //FirestoreModule
+    provideFirebaseApp(() => initializeApp(environment.firebaseConfig)),
+    provideFirestore(() => getFirestore())
   ],
   providers: [],
   bootstrap: [AppComponent]

@@ -2,6 +2,8 @@ import { Component, ViewEncapsulation, OnInit, AfterViewInit } from '@angular/co
 import { Puzzle } from './puzzle';
 import { PuzzleService } from './puzzle.service';
 import { Router } from '@angular/router';
+import { Firestore, collectionData, collection } from '@angular/fire/firestore';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -10,25 +12,20 @@ import { Router } from '@angular/router';
   encapsulation: ViewEncapsulation.None
 })
 export class AppComponent {
-  title = "Colin's Crosswords";
-
-  /*constructor(private router : Router) {
-  }
-
-  ngAfterViewInit(): void {
-    //(<HTMLElement> document.getElementById("headline-title")).innerHTML = "";
-    (<HTMLElement> document.getElementById("headline-sub-title")).innerHTML = "";
-    this.router.navigateByUrl('/crosswords');
-  }*/
-
   puzzles : Puzzle[] = [];
+  item$: Observable<Puzzle[]>;
+
 
   selectedPuzzle?: Puzzle;
   onSelect(puzzle: Puzzle): void {
     this.selectedPuzzle = puzzle;
   }
 
-  constructor(private puzzleService: PuzzleService, private router : Router) { }
+  constructor(private puzzleService: PuzzleService, private router : Router, private store: Firestore) {
+    const col = collection(store, 'puzzle-store');
+    this.item$ = collectionData(col) as Observable<Puzzle[]>;
+    console.log(this.item$);
+  }
 
   createPuzzleLink(puzzle : Puzzle) : HTMLElement {
       var routerLink = document.createElement("th");
@@ -58,8 +55,8 @@ export class AppComponent {
   }
 
   ngOnInit(): void {
-    this.getPuzzles();
-    var nav = document.getElementById("nav-table");
+    this.getPuzzlesFromDB();
+    /*var nav = document.getElementById("nav-table");
     var counter = 0;
     var rowDOM = document.createElement("tr");
     for(var i = this.puzzles.length-1; i >= 0; i--){
@@ -74,11 +71,53 @@ export class AppComponent {
     }
     if(counter > 0){
       nav!.appendChild(rowDOM);
-    }
+    }*/
   }
 
   ngOnDestroy(): void {
     (<HTMLElement> document.getElementById("headline-sub-title")).innerHTML = "";
+  }
+
+  getPuzzle(id : String): Puzzle | undefined {
+    for(var puzzle of this.puzzles){
+      if(puzzle.id == id){
+        return puzzle;
+      }
+    }
+    return undefined;
+  }
+
+  clearPuzzleNav(): void{
+    const navDOM = document.getElementById('nav-table');
+    while (navDOM!.firstChild) {
+      navDOM!.removeChild(navDOM!.firstChild);
+    }
+  }
+
+  getPuzzlesFromDB(): void {
+    this.puzzleService.getPuzzlesFromDB().subscribe(
+      puzzles => {
+        var counter = 0;
+        this.clearPuzzleNav()
+        var nav = document.getElementById("nav-table");
+        var rowDOM = document.createElement("tr");
+        for(var i = puzzles.length-1; i >= 0; i--){
+          var puzzle = puzzles[i]
+          counter = counter + 1;
+          rowDOM!.appendChild(this.createPuzzleLink(puzzle));
+          if(counter == 4){
+            counter = 0;
+            nav!.appendChild(rowDOM);
+            rowDOM! = document.createElement("tr");
+          }
+        }
+        if(counter > 0){
+          nav!.appendChild(rowDOM);
+        }
+        console.log(puzzles);
+        this.puzzles = puzzles;
+      }
+    );
   }
 
 

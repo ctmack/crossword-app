@@ -5,24 +5,32 @@
 				<div id="crossword-grid-overlay"></div>
 				<table id="crossword-table"></table>
 			</div>
+			<table style="font-family: Montesarrat;display:grid;border:none;width: 80%;margin:auto;margin-top: 20px;grid-template-columns: 50% 50%; height: 35px; line-height: 35px; font-size: 13px; color: white">
+				<td id="save-button"><div>Save</div></td>
+			</table>
 		</div>
 		<div style="width:600px;">
-			<table id="construct-controls">
-				<tr id="construct-select">
-					<td id="construct-fill-button" class="construct-button construct-type">Fill</td>
-					<td id="construct-build-button" class="construct-button construct-type">Build</td>
-				</tr>
-				<tr id="reset-buttons">
-					<td id="clear-letters-button" class="construct-button">Clear Letters</td>
-					<td id="clear-all-button" class="construct-button">Clear All</td>
-				</tr>
-			</table>
-			<div id="fill-section">
-				<div style="text-align: left; margin-left: 3px;">Possible Fill Words</div>
-				<!-- <div id="word-button">get words</div> -->
-				<div id="word-list"></div>
+			<div id="construct-controls">
+				<table id="construct-table">
+					<tr id="construct-select">
+						<td id="construct-fill-button" class="construct-type">Fill</td>
+						<td id="construct-build-button" class="construct-type">Build</td>
+					</tr>
+					<tr id="reset-buttons">
+						<td id="clear-letters-button" class="clear-button">Clear Letters</td>
+						<td id="clear-all-button" class="clear-button">Clear All</td>
+					</tr>
+				</table>
 			</div>
-			<div id="build-section" class="hidden" style="text-align:left;">
+			<div id="fill-section">
+				<div style="text-align: center; font-size: 16px">Possible Fill Words</div>
+				<!-- <div id="word-button">get words</div> -->
+				<table style="display:grid;border:none;width: 80%;margin:auto;margin-bottom: 10px;grid-template-columns: 50% 50%; height: 380px;">
+					<div id="word-list-1" class="word-list"></div>
+					<div id="word-list-2" class="word-list"></div>
+				</table>
+			</div>
+			<div id="build-section" class="hidden" style="text-align:left;height: 475px;">
 				<div id="mirror-select">
 					<div class="build-title">Build Design Mirroring</div>
 					<div class="mirror-type">
@@ -63,6 +71,25 @@
 						<div class="size-button" id="preset-8"><div style="margin: auto;">8 x 8</div></div>
 					</div>
 				</div>
+			</div>
+			<div id="clue-section" class="hidden" style="text-align:left;">
+				<table style="display:grid;border:none;width: 80%;margin:auto;margin-bottom: 10px;grid-template-columns: 50% 50%;">
+					<div id="across-clues-section" class="clue-section" style="margin-right: 10px;">
+						<div id="across-clues-title" class="clue-section-title">Across</div>
+						<div id="across-clues-listing" class="clue-section-listing" style="overflow:scroll;height:538px;"></div>
+					</div>
+					<div id="down-clues-section" class="clue-section">
+						<div id="down-clues-title" class="clue-section-title">Down</div>
+						<div id="down-clues-listing" class="clue-section-listing" style="overflow:scroll;height:538px;"></div>
+					</div>
+				</table>
+			</div>
+			<div style="margin-right: 50px;float:right;"><div id="clue-mode-toggle">Continue To Cluing >></div></div>
+			<div id="review-section" class="hidden">
+				<div>Clue Pannel</div>
+				<div>Across Clues</div>
+				<div>Down Clues</div>
+				<div>Save? or Submit?</div>
 			</div>
 		</div>
 	</div>

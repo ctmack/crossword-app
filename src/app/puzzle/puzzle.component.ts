@@ -4,6 +4,7 @@ import { Puzzle } from '../puzzle';
 import { Router, ActivatedRoute, ParamMap } from '@angular/router';
 import { PuzzleService } from '../puzzle.service';
 import { switchMap } from 'rxjs/operators';
+import { AppComponent } from '../app.component';
 declare var $: any;
 
 @Component({
@@ -26,7 +27,7 @@ export class PuzzleComponent implements OnInit, AfterViewInit {
   puzzleComplete: boolean = false;
   userGridString: String = "";
 
-  constructor(private puzzleService: PuzzleService, private route: ActivatedRoute, private router : Router) {
+  constructor(private puzzleService: PuzzleService, private route: ActivatedRoute, private router : Router, private app : AppComponent) {
     //var puzzleState = this.router!.getCurrentNavigation()!.extras.state;
     //if(puzzleState != undefined){
      // this.puzzleId = this.router!.getCurrentNavigation()!.extras.state!["id"];
@@ -95,7 +96,10 @@ export class PuzzleComponent implements OnInit, AfterViewInit {
   }
 
   getPuzzle(id: String): void {
-      this.puzzleService.getPuzzles().subscribe(
+    this.puzzle = this.app.getPuzzle(id);
+    //this.puzzle = puzzle;
+    //}
+      /*this.puzzleService.getPuzzlesFromDB().subscribe(
         puzzles => {
           this.puzzles = puzzles;
         }
@@ -104,7 +108,7 @@ export class PuzzleComponent implements OnInit, AfterViewInit {
         if(puzzle.id == id){
           this.puzzle = puzzle;
         }
-      }
+      }*/
   }
 
   highlightWord(elem: HTMLElement) {
@@ -638,6 +642,7 @@ export class PuzzleComponent implements OnInit, AfterViewInit {
         if(nextClue == null){
           this.checkAnswers();
           if(this.puzzleComplete){
+            this.populateUserGridString();
             (<HTMLElement> document.getElementById("timer"))!.style.color = "rgb(114, 148, 130)";
             (<HTMLElement> document.getElementById("timer"))!.style.fontWeight = "bold";
             window.clearTimeout(this.timer);
