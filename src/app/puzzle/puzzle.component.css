@@ -23,11 +23,13 @@
 #clues{
 	padding-top: 50px;
 	display: inline-flex;
+	margin-left: 30px;
+	width: 100%;
 }
 
 .clue-section{
-	width: 250px;
 	text-align: left;
+	width: 100%;
 }
 
 .clue-section-listing{

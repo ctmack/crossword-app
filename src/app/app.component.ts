@@ -28,14 +28,19 @@ export class AppComponent {
   }
 
   createPuzzleLink(puzzle : Puzzle) : HTMLElement {
-      var routerLink = document.createElement("th");
+      var routerLink = document.createElement("div");
       routerLink.classList.add("puzzle-link");
       var puzzleTitle = document.createElement("div");
       puzzleTitle.classList.add("puzzle-title");
       puzzleTitle.innerHTML = "<span style=\"align-self: center;\">" + puzzle.title + "</span>";
       routerLink.appendChild(puzzleTitle);
       var puzzleIcon = document.createElement("img");
-      puzzleIcon.src = "./../../assets/xword-icon-large.jpg";
+      if(puzzle.height < 15){
+        puzzleIcon.src = "./../../assets/xword-mini-icon.jpg";
+      }
+      else{
+        puzzleIcon.src = "./../../assets/xword-icon-large.jpg";
+      }
       puzzleIcon.classList.add("puzzle-icon");
       routerLink.appendChild(puzzleIcon);
       var puzzleDate = document.createElement("div");
@@ -56,22 +61,6 @@ export class AppComponent {
 
   ngOnInit(): void {
     this.getPuzzlesFromDB();
-    /*var nav = document.getElementById("nav-table");
-    var counter = 0;
-    var rowDOM = document.createElement("tr");
-    for(var i = this.puzzles.length-1; i >= 0; i--){
-      var puzzle = this.puzzles[i]
-      counter = counter + 1;
-      rowDOM!.appendChild(this.createPuzzleLink(puzzle));
-      if(counter == 4){
-        counter = 0;
-        nav!.appendChild(rowDOM);
-        rowDOM! = document.createElement("tr");
-      }
-    }
-    if(counter > 0){
-      nav!.appendChild(rowDOM);
-    }*/
   }
 
   ngOnDestroy(): void {
@@ -94,27 +83,39 @@ export class AppComponent {
     }
   }
 
+  getCreateLink(): HTMLElement {
+    var routerLink = document.createElement("div");
+    routerLink.classList.add("puzzle-link");
+    routerLink.classList.add("create-link");
+    var puzzleTitle = document.createElement("div");
+    puzzleTitle.classList.add("puzzle-title");
+    puzzleTitle.innerHTML = "<span style=\"align-self: center;\">Create +</span>";
+    routerLink.appendChild(puzzleTitle);
+    var puzzleSize = document.createElement("div");
+    routerLink.addEventListener("click", () => {
+      this.router.navigateByUrl('/create');
+    });
+
+    return routerLink;
+  }
+
   getPuzzlesFromDB(): void {
+    this.clearPuzzleNav();
     this.puzzleService.getPuzzlesFromDB().subscribe(
       puzzles => {
         var counter = 0;
-        this.clearPuzzleNav()
-        var nav = document.getElementById("nav-table");
-        var rowDOM = document.createElement("tr");
+          var nav = document.getElementById("nav-table");
+        var rowDOM = document.createElement("div");
+        this.clearPuzzleNav();
         for(var i = puzzles.length-1; i >= 0; i--){
           var puzzle = puzzles[i]
           counter = counter + 1;
           rowDOM!.appendChild(this.createPuzzleLink(puzzle));
-          if(counter == 4){
-            counter = 0;
-            nav!.appendChild(rowDOM);
-            rowDOM! = document.createElement("tr");
-          }
         }
+        rowDOM!.appendChild(this.getCreateLink());
         if(counter > 0){
           nav!.appendChild(rowDOM);
         }
-        console.log(puzzles);
         this.puzzles = puzzles;
       }
     );

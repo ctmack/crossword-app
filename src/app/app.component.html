@@ -2,13 +2,14 @@
 	<div id="home-button"><a routerLink="/"><img style="height: 24px" src="./../../assets/xword.jpg"/></a></div>
 	<div id="headline-title"><a routerLink="/">Crossword Cloud</a></div>
 	<div id="headline-sub-title"></div>
+	<div id="create-button" style="float: right;display: block;margin-right: 30px;">
+		<a routerLink="/create" id="create-button">Create +</a>
+	</div>
 </div>
 <nav id="puzzle-nav">
-	<div style="display: inline-block;">
-		<table id="nav-table"></table>
-		<div id="create-button" style="width: 100%;text-align: center;display: block;margin: auto;margin-top: 50px;">
-			<a routerLink="/create" style="text-decoration: none; color:white;width: 100px; height: 30px;background-color: black;display: block;text-align: center;line-height: 30px;margin: auto;">Create</a>
-		</div>
+	<div class="puzzle-section-title">All Puzzles</div>
+	<div class="puzzle-section-selector" style="display: inline-block;">
+		<div id="nav-table"></div>
 	</div>
 </nav>
 

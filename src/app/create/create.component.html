@@ -5,8 +5,10 @@
 				<div id="crossword-grid-overlay"></div>
 				<table id="crossword-table"></table>
 			</div>
-			<table style="font-family: Montesarrat;display:grid;border:none;width: 80%;margin:auto;margin-top: 20px;grid-template-columns: 50% 50%; height: 35px; line-height: 35px; font-size: 13px; color: white">
-				<td id="save-button"><div>Save</div></td>
+			<table id="review-section" style="font-family: Montesarrat;display:grid;border:none;width: 80%;margin:auto;margin-top: 20px;grid-template-columns: 33% 33% 33%; height: 35px; line-height: 35px; font-size: 13px; color: white">
+				<td class="review-button" id="save-button"><div>Save</div></td>
+				<td class="review-button" id="submit-button"><div>Submit</div></td>
+				<td class="review-button" id="export-button"><div>Export</div></td>
 			</table>
 		</div>
 		<div style="width:600px;">
@@ -23,7 +25,11 @@
 				</table>
 			</div>
 			<div id="fill-section">
-				<div style="text-align: center; font-size: 16px">Possible Fill Words</div>
+				<div style="display: inline-flex;height:20px">
+					<div class="word-list-nav" id="word-list-back">&#8249;</div>
+					<div style="text-align: center; font-size: 16px">Possible Fill Words</div>
+					<div class="word-list-nav" id="word-list-forward">&#8250;</div>
+				</div>
 				<!-- <div id="word-button">get words</div> -->
 				<table style="display:grid;border:none;width: 80%;margin:auto;margin-bottom: 10px;grid-template-columns: 50% 50%; height: 380px;">
 					<div id="word-list-1" class="word-list" style="margin-top: 15px;"></div>
@@ -76,15 +82,15 @@
 				<table style="display:grid;border:none;width: 80%;margin:auto;margin-bottom: 10px;grid-template-columns: 50% 50%;">
 					<div id="across-clues-section" class="clue-section" style="margin-right: 10px;">
 						<div id="across-clues-title" class="clue-section-title">Across</div>
-						<div id="across-clues-listing" class="clue-section-listing" style="overflow:scroll;height:538px;"></div>
+						<div id="across-clues-listing" class="clue-section-listing" style="overflow:scroll;height:523px;"></div>
 					</div>
 					<div id="down-clues-section" class="clue-section">
 						<div id="down-clues-title" class="clue-section-title">Down</div>
-						<div id="down-clues-listing" class="clue-section-listing" style="overflow:scroll;height:538px;"></div>
+						<div id="down-clues-listing" class="clue-section-listing" style="overflow:scroll;height:523px;"></div>
 					</div>
 				</table>
 			</div>
-			<div style="margin-right: 50px;float:right;"><div id="clue-mode-toggle">Continue To Cluing >></div></div>
+			<div style="margin-right: 50px;float:right;"><div id="clue-mode-toggle">Continue to Cluing &#8594;</div></div>
 			<div id="review-section" class="hidden">
 				<div>Clue Pannel</div>
 				<div>Across Clues</div>

@@ -5,7 +5,7 @@ import { Router, ActivatedRoute, ParamMap } from '@angular/router';
 import { PuzzleService } from '../puzzle.service';
 import { RespWord } from '../resp-word';
 import { switchMap } from 'rxjs/operators';
-import { getFirestore, doc, setDoc } from "firebase/firestore";
+import { getFirestore, doc, setDoc, updateDoc } from "firebase/firestore";
 import { Firestore, collectionData, collection } from '@angular/fire/firestore';
 
 @Component({
@@ -16,7 +16,7 @@ import { Firestore, collectionData, collection } from '@angular/fire/firestore';
 })
 export class CreateComponent implements OnInit, AfterViewInit {
 
-  puzzleId: string = this.createPuzzleId();
+  puzzleId: string = "";
   count: number = 0;
   paused: boolean = false;
   gridElems: HTMLElement[] = [];
@@ -27,14 +27,17 @@ export class CreateComponent implements OnInit, AfterViewInit {
   mirrorMode: String = ""; // free*, x-axis*, y-axis*, xy-axis*, rotational*, diagonal*
   puzzleWidth: number = 15;
   puzzleHeight: number = 15;
-  acrossClues = "";
-  downClues = "";
+  acrossClues: String = "";
+  downClues: String = "";
+  currentWordList: string[] = [];
+  wordListStartingIndex: number = -1;
+  wordListMaxLength: number = 40;
 
   constructor(private store: Firestore) {
   }
 
   ngOnInit(): void {
-    document.getElementById("nav-table")!.style.display="none";
+    document.getElementById("puzzle-nav")!.style.display="none";
     document.getElementById("create-button")!.style.display="none";
     for(var i = 0; i < this.puzzleWidth; i++){
       for(var j = 0; j < this.puzzleHeight; j++){
@@ -44,7 +47,7 @@ export class CreateComponent implements OnInit, AfterViewInit {
   }
 
   ngOnDestroy(): void {
-    document.getElementById("nav-table")!.style.display="block";
+    document.getElementById("puzzle-nav")!.style.display="block";
     document.getElementById("create-button")!.style.display="block";
     (<HTMLElement> document.getElementById("headline-sub-title")).innerHTML = "";
   }
@@ -95,7 +98,7 @@ export class CreateComponent implements OnInit, AfterViewInit {
       var targetElem = <HTMLElement> event.target;
       if(this.constructMode == "clue"){
         this.constructMode = "fill";
-        targetElem.innerHTML = "Continue to Cluing >>"
+        targetElem.innerHTML = "Continue to Cluing &#8594;"
         document.getElementById("clue-section")!.classList.add("hidden");
         document.getElementById("fill-section")!.classList.remove("hidden");
         document.getElementById("construct-controls")!.classList.remove("hidden");
@@ -105,7 +108,7 @@ export class CreateComponent implements OnInit, AfterViewInit {
       }
       else {
         this.constructMode = "clue";
-        targetElem.innerHTML = "<< Back to Grid Construct"
+        targetElem.innerHTML = "&#8592; Back to Grid Construct"
         document.getElementById("build-section")!.classList.add("hidden");
         document.getElementById("fill-section")!.classList.add("hidden");
         document.getElementById("construct-controls")!.classList.add("hidden");
@@ -122,11 +125,22 @@ export class CreateComponent implements OnInit, AfterViewInit {
       this.mirrorMode = document.getElementsByClassName("mirror-type")[0].innerHTML.toLowerCase();
     }
 
+    document.getElementById('word-list-back')!.addEventListener("click", (event) => {
+      if(this.wordListStartingIndex - this.wordListMaxLength >= 0){
+        this.setFillWordLists(this.wordListStartingIndex-this.wordListMaxLength);
+      }
+    })
+    document.getElementById('word-list-forward')!.addEventListener("click", (event) => {
+      if(this.wordListStartingIndex + this.wordListMaxLength < this.currentWordList.length){
+        this.setFillWordLists(this.wordListStartingIndex + this.wordListMaxLength);
+      }
+    })
+
     document.getElementById('clear-letters-button')!.addEventListener("click", (event) => {
-      this.clearLetters();
+      this.clearLettersPrompt();
     })
     document.getElementById('clear-all-button')!.addEventListener("click", (event) => {
-      this.clearAll();
+      this.clearAllPrompt();
     })
 
     document.getElementById('preset-15')!.addEventListener("click", (event) => {
@@ -157,6 +171,12 @@ export class CreateComponent implements OnInit, AfterViewInit {
     document.getElementById('save-button')!.addEventListener("click", (event) => {
       this.savePuzzle();
     })
+    document.getElementById('submit-button')!.addEventListener("click", (event) => {
+      this.submitPuzzle();
+    })
+    document.getElementById('export-button')!.addEventListener("click", (event) => {
+      this.exportPuzzle();
+    })
   }
 
   setFillWords(){
@@ -171,6 +191,16 @@ export class CreateComponent implements OnInit, AfterViewInit {
         }
       }
     }
+    this.getWords(segment).then(words => {
+      var wordL : string[] = words.map(u => u.word.toString());
+      wordL = this.shuffleWords(wordL);
+      wordL = this.standardizeWords(wordL);
+      this.currentWordList = wordL;
+      this.setFillWordLists(0);
+    });
+  }
+
+  setFillWordLists(startIndex: number){
     const listDOM = document.getElementById('word-list-1');
     const list2DOM = document.getElementById('word-list-2');
     while (listDOM!.firstChild) {
@@ -179,48 +209,103 @@ export class CreateComponent implements OnInit, AfterViewInit {
     while (list2DOM!.firstChild) {
       list2DOM!.removeChild(list2DOM!.firstChild);
     }
-    this.getWords(segment).then(words => {
-      var wordL : string[] = words.map(u => u.word.toString());
-      var x = 0;
-      var count = 0;
-      var listLength = 40;
-      while(x < wordL.length && count < listLength){
-        var wordString = (<String> wordL[x]).toUpperCase()
-        if(/^[a-zA-Z]+$/.test(wordString)){
-          var wordDOM = document.createElement('div');
-          wordDOM!.innerHTML = wordString;
-          wordDOM.classList.add("fill-word");
-          wordDOM.addEventListener("click", (event) => {
-            var targetElem = <HTMLElement> event.target;
-            var wordIndex = 0;
-            for(var i = 0; i < this.gridElems.length; i++){
-              if(this.gridElems[i].classList.contains("focus") || this.gridElems[i].classList.contains("focus-word")){
-                (<HTMLElement> this.gridElems[i].childNodes[1]).innerHTML = targetElem.innerHTML[wordIndex];
-                wordIndex = wordIndex + 1;
-                if(wordIndex >= targetElem.innerHTML.length){break;}
-              }
-            }
-
-            var nextClue = this.findNextClue(<HTMLElement> document.getElementsByClassName("focus")[0]);
-            if(nextClue == null){
-              return;
-            }
-            this.highlightWord(<HTMLElement> nextClue);
-            this.populateUserGridString();
-            this.setFillWords();
-
-          })
-          if(count < (listLength / 2)){
-            listDOM!.append(wordDOM);
-          }
-          else{
-            list2DOM!.append(wordDOM);
-          }
-          count = count + 1;
-        }
-        x = x + 1;
+    var x = startIndex;
+    var count = 0;
+    while(x < this.currentWordList.length && count < this.wordListMaxLength){
+      var wordString = (<String> this.currentWordList[x]).toUpperCase()
+      var wordDOM = this.createFillWord(wordString);
+      if(count < (this.wordListMaxLength / 2)){
+        listDOM!.append(wordDOM);
       }
-    });
+      else{
+        list2DOM!.append(wordDOM);
+      }
+      count = count + 1;
+      x = x + 1;
+    }
+
+    this.wordListStartingIndex = startIndex;
+
+    if(startIndex + count < this.currentWordList.length){
+      document.getElementById('word-list-forward')!.classList.remove("inactive");
+    }
+    else{
+      document.getElementById('word-list-forward')!.classList.add("inactive");
+    }
+
+    if(startIndex - this.wordListMaxLength < 0){
+      document.getElementById('word-list-back')!.classList.add("inactive");
+    }
+    else{
+      document.getElementById('word-list-back')!.classList.remove("inactive");
+    }
+
+  }
+
+  createFillWord(wordString: string) : HTMLElement{
+    var wordDOM = document.createElement('div');
+    wordDOM!.innerHTML = wordString;
+    wordDOM.classList.add("fill-word");
+    wordDOM.addEventListener("click", (event) => {
+      var targetElem = <HTMLElement> event.target;
+      var wordIndex = 0;
+      for(var i = 0; i < this.gridElems.length; i++){
+        if(this.gridElems[i].classList.contains("focus") || this.gridElems[i].classList.contains("focus-word")){
+          (<HTMLElement> this.gridElems[i].childNodes[1]).innerHTML = targetElem.innerHTML[wordIndex];
+          wordIndex = wordIndex + 1;
+          if(wordIndex >= targetElem.innerHTML.length){break;}
+        }
+      }
+
+      var nextClue = this.findNextClue(<HTMLElement> document.getElementsByClassName("focus")[0]);
+      if(nextClue == null){
+        return;
+      }
+      this.highlightWord(<HTMLElement> nextClue);
+      this.populateUserGridString();
+      this.setFillWords();
+    })
+    return wordDOM;
+  }
+
+  standardizeWords(array: string[]) : string[]{
+    var currentIndex = array.length-1;
+    while (currentIndex >= 0) {
+      if (!/^[a-zA-Z]+$/.test(array[currentIndex])) {
+        array.splice(currentIndex, 1);
+      }
+      currentIndex--;
+    }
+    return array;
+  }
+
+  shuffleWords(array: string[]) : string[]{
+    var currentIndex = array.length;
+    var randomIndex = -1;
+
+    while (currentIndex != 0) {
+      randomIndex = Math.floor(Math.random() * currentIndex);
+      currentIndex--;
+      [array[currentIndex], array[randomIndex]] = [
+        array[randomIndex], array[currentIndex]];
+      }
+    return array;
+  }
+
+  clearLettersPrompt() {
+    var input;
+    input = confirm('Are you sure you want to delete all puzzle grid letters?');
+    if (input === true) {
+      this.clearLetters();
+    }
+  }
+
+  clearAllPrompt() {
+    var input;
+    input = confirm('Are you sure you want to clear the puzzle grid entirely?');
+    if (input === true) {
+      this.clearAll();
+    }
   }
 
 
@@ -354,8 +439,8 @@ export class CreateComponent implements OnInit, AfterViewInit {
           clueCount = clueCount + 1;
           acrossVal = clueCount;
           downVal = clueCount;
-          this.addAcrossClue(acrossVal);
-          this.addDownClue(downVal);
+          this.addClue(acrossVal, "A");
+          this.addClue(downVal, "D");
           numberLabel = clueCount;
 
         }
@@ -363,7 +448,7 @@ export class CreateComponent implements OnInit, AfterViewInit {
           if(j == 0 || this.puzzleGridString[index-1] == "#"){
             clueCount = clueCount + 1;
             acrossVal = clueCount;
-            this.addAcrossClue(acrossVal);
+            this.addClue(acrossVal, "A");
             downVal = this.getDownFromElem(this.gridElems[this.gridElems.length - columnCount]);
             numberLabel = clueCount;
 
@@ -379,7 +464,7 @@ export class CreateComponent implements OnInit, AfterViewInit {
           else if(i == 0 || this.puzzleGridString[index-columnCount] == "#"){
             clueCount = clueCount + 1;
             downVal = clueCount;
-            this.addDownClue(downVal);
+            this.addClue(downVal, "D");
             acrossVal = this.getAcrossFromElem(this.gridElems[this.gridElems.length-1]);
             numberLabel = clueCount;
 
@@ -424,7 +509,7 @@ export class CreateComponent implements OnInit, AfterViewInit {
               this.focusAcross = !this.focusAcross;
             }
             this.highlightWord(targetElem);
-            this.selectClue(targetElem);
+            this.selectClueFromClickedGridElem(targetElem);
           }
 
         })
@@ -658,10 +743,10 @@ export class CreateComponent implements OnInit, AfterViewInit {
     }
   }
 
-  selectClue(elem : HTMLElement){
+  selectClueFromClickedGridElem(clickedElem : HTMLElement){
     this.clearClueSelect();
     if(this.focusAcross){
-      var clueNum = this.getAcrossFromElem(elem);
+      var clueNum = this.getAcrossFromElem(clickedElem);
       var acrossClueList: HTMLElement | null = document.getElementById('across-clues-listing');
       for(var i = 0; i < acrossClueList!.getElementsByClassName("clue").length; i++){
         var clueElemNum = parseInt((<HTMLElement> acrossClueList!.getElementsByClassName("clue")[i].getElementsByClassName("clue-number")[0]).innerHTML.replace(/[^0-9]/gi, ''));
@@ -672,7 +757,7 @@ export class CreateComponent implements OnInit, AfterViewInit {
       }
     }
     else{
-      var clueNum = this.getDownFromElem(elem);
+      var clueNum = this.getDownFromElem(clickedElem);
       var downClueList: HTMLElement | null = document.getElementById('down-clues-listing');
       for(var i = 0; i < downClueList!.getElementsByClassName("clue").length; i++){
         var clueElemNum = parseInt((<HTMLElement> downClueList!.getElementsByClassName("clue")[i].getElementsByClassName("clue-number")[0]).innerHTML.replace(/[^0-9]/gi, ''));
@@ -686,55 +771,35 @@ export class CreateComponent implements OnInit, AfterViewInit {
 
   }
 
-  addAcrossClue(clueNum : number) {
-    var acrossClueList: HTMLElement | null = document.getElementById('across-clues-listing');
+  addClue(clueNum : number, clueDirection: string) {
+    if(clueDirection == "A"){
+      var clueList: HTMLElement | null = document.getElementById('across-clues-listing');
+    }
+    else{
+      var clueList: HTMLElement | null = document.getElementById('down-clues-listing');
+    }
     var squareDOM = document.createElement('div');
     squareDOM.classList.add("clue");
     var numLabel = document.createElement('div');
     numLabel.classList.add("clue-number")
     var clueInput = document.createElement('textarea');
     clueInput.classList.add("clue-input");
-    this.acrossClues = this.acrossClues + ";";
-    squareDOM.id = "A" + clueNum;
-    numLabel.innerHTML = "A" + clueNum;
-    squareDOM.appendChild(numLabel);
-    squareDOM.appendChild(clueInput);
-    squareDOM.addEventListener("click", (event) => { 
-      this.clearClueSelect();
-      this.focusAcross = true;
-      var targetElem = <HTMLElement> event.target;
-      if(targetElem!.classList.contains("clue-number") || targetElem!.classList.contains("clue-input")){
-        targetElem = <HTMLElement> targetElem!.parentElement;
-      }
-      targetElem.classList.add("selected");
-      (<HTMLElement> targetElem.getElementsByClassName("clue-input")[0]).focus();
-      var clueNum = parseInt((<HTMLElement> targetElem.getElementsByClassName("clue-number")[0]).innerHTML.replace(/[^0-9]/gi, ''));
-      for(var i = 0; i < this.gridElems.length; i++){
-        if(this.getAcrossFromElem(this.gridElems[i]) == clueNum){
-          this.highlightWord(this.gridElems[i]);
-          break;
-        }
-      }
-    });
-    acrossClueList!.appendChild(squareDOM);
-  }
+    if(clueDirection == "A"){
+      this.acrossClues = this.acrossClues + ";";
+      squareDOM.id = "A" + clueNum;
+      numLabel.innerHTML = "A" + clueNum;
+    }
+    else{
+      this.downClues = this.downClues + ";";
+      squareDOM.id = "D" + clueNum;
+      numLabel.innerHTML = "D" + clueNum;
+    }
 
-  addDownClue(clueNum : number) {
-    var downClueList: HTMLElement | null = document.getElementById('down-clues-listing');
-    var squareDOM = document.createElement('div');
-    squareDOM.classList.add("clue");
-    var numLabel = document.createElement('div');
-    numLabel.classList.add("clue-number")
-    var clueInput = document.createElement('textarea');
-    clueInput.classList.add("clue-input");
-    this.downClues = this.downClues + ";";
-    squareDOM.id = "D" + clueNum;
-    numLabel.innerHTML = "D" + clueNum;
     squareDOM.appendChild(numLabel);
     squareDOM.appendChild(clueInput);
     squareDOM.addEventListener("click", (event) => { 
       this.clearClueSelect();
-      this.focusAcross = false;
+      this.focusAcross = (clueDirection == "A");
       var targetElem = <HTMLElement> event.target;
       if(targetElem!.classList.contains("clue-number") || targetElem!.classList.contains("clue-input")){
         targetElem = <HTMLElement> targetElem!.parentElement;
@@ -742,14 +807,15 @@ export class CreateComponent implements OnInit, AfterViewInit {
       targetElem.classList.add("selected");
       (<HTMLElement> targetElem.getElementsByClassName("clue-input")[0]).focus();
       var clueNum = parseInt((<HTMLElement> targetElem.getElementsByClassName("clue-number")[0]).innerHTML.replace(/[^0-9]/gi, ''));
+      console.log(clueNum);
       for(var i = 0; i < this.gridElems.length; i++){
-        if(this.getDownFromElem(this.gridElems[i]) == clueNum){
+        if((clueDirection == "A" && this.getAcrossFromElem(this.gridElems[i]) == clueNum) || (clueDirection == "D" && this.getDownFromElem(this.gridElems[i]) == clueNum)){
           this.highlightWord(this.gridElems[i]);
           break;
         }
       }
     });
-    downClueList!.appendChild(squareDOM);
+    clueList!.appendChild(squareDOM);
   }
 
   populateBlankClues() {
@@ -892,23 +958,128 @@ export class CreateComponent implements OnInit, AfterViewInit {
     var date = new Date();
     var dateString = date.toLocaleString('en-US', options);
 
-    await setDoc(doc(this.store, "puzzle-store", this.puzzleId), {
-      id: this.puzzleId,
-      title: dateString,
-      date: dateString,
-      grid: gridString,
-      height: this.puzzleHeight,
-      width: this.puzzleWidth,
-      key: this.puzzleGridString,
-      acrossClues: this.acrossClues,
-      downClues: this.downClues
-    });
+    if(this.puzzleId == ""){
+      this.puzzleId = this.createPuzzleId();
+      await setDoc(doc(this.store, "puzzle-draft-store", this.puzzleId), {
+        id: this.puzzleId,
+        title: dateString,
+        date: dateString,
+        grid: gridString,
+        height: this.puzzleHeight,
+        width: this.puzzleWidth,
+        key: this.puzzleGridString,
+        acrossClues: this.acrossClues,
+        downClues: this.downClues
+      });
+    }
+    else{
+      await updateDoc(doc(this.store, "puzzle-draft-store", this.puzzleId), {
+        id: this.puzzleId,
+        title: dateString,
+        date: dateString,
+        grid: gridString,
+        height: this.puzzleHeight,
+        width: this.puzzleWidth,
+        key: this.puzzleGridString,
+        acrossClues: this.acrossClues,
+        downClues: this.downClues
+      });
+    }
+  }
 
+  async submitPuzzle(){
+    var gridString = "";
+    for(var i = 0; i < this.puzzleGridString.length; i++){
+      if(this.puzzleGridString[i] == "#"){
+        gridString = gridString + "#";
+      }
+      else {
+        gridString = gridString + ".";
+      }
+    }
+    var options = { weekday: "long", year: "numeric", month: "long", day: "numeric" } as const;
+    var date = new Date();
+    var dateString = date.toLocaleString('en-US', options);
+
+    if(this.checkStandards()){
+      if(this.puzzleId == ""){
+        this.puzzleId = this.createPuzzleId();
+      }
+      await setDoc(doc(this.store, "puzzle-store", this.puzzleId), {
+        id: this.puzzleId,
+        title: dateString,
+        date: dateString,
+        grid: gridString,
+        height: this.puzzleHeight,
+        width: this.puzzleWidth,
+        key: this.puzzleGridString,
+        acrossClues: this.acrossClues,
+        downClues: this.downClues
+      });
+    }
+  }
+
+  exportPuzzle(){
+
+  }
+
+  tabFocusClue(){
+    var clueElems = document.getElementsByClassName("clue");
+    var clueNum = -1;
+    var clueDirection = "";
+    for(var i = 0; i < clueElems.length; i++){
+      if(clueElems[i].classList.contains("selected")){
+        clueElems[i].classList.remove("selected");
+        if(i+1 < clueElems.length){
+          clueElems[i+1].classList.add("selected");
+          clueNum = parseInt((<HTMLElement> clueElems[i+1].getElementsByClassName("clue-number")[0]).innerHTML.replace(/[^0-9]/gi, ''));
+          clueDirection = (<HTMLElement> clueElems[i+1].getElementsByClassName("clue-number")[0]).innerHTML.replace(/[0-9]/gi, '');
+        }
+      //if(clueElems[i].classList.contains("selected")){
+        //clueElems[i].classList.remove("selected");
+      //}
+        else{
+          clueElems[0].classList.add("selected");
+          clueNum = parseInt((<HTMLElement> clueElems[0].getElementsByClassName("clue-number")[0]).innerHTML.replace(/[^0-9]/gi, ''));
+          clueDirection = (<HTMLElement> clueElems[0].getElementsByClassName("clue-number")[0]).innerHTML.replace(/[0-9]/gi, '');
+          //(<HTMLElement> document.activeElement)!.focus();
+        }
+        break;
+      }
+    }
+    //var parentClueElem = document.activeElement!.parentElement
+    //if(!parentClueElem!.classList.contains("clue")){
+      //return;
+    //}
+    //parentClueElem!.classList.add("selected");
+    clueNum = parseInt((<HTMLElement> clueElems[0]!.getElementsByClassName("clue-number")[0]).innerHTML.replace(/[^0-9]/gi, ''));
+    clueDirection = (<HTMLElement> clueElems[0]!.getElementsByClassName("clue-number")[0]).innerHTML.replace(/[0-9]/gi, '');
+    this.focusAcross = (clueDirection == "A");
+    for(var i = 0; i < this.gridElems.length; i++){
+      if((clueDirection == "A" && this.getAcrossFromElem(this.gridElems[i]) == clueNum) || (clueDirection == "D" && this.getDownFromElem(this.gridElems[i]) == clueNum) ){
+        this.highlightWord(this.gridElems[i]);
+        break;
+      }
+    }
   }
 
 
   @HostListener('document:keydown', ['$event'])
   handleKeyboardEvent(event: KeyboardEvent) {
+    if(this.constructMode == "clue"){
+      if (event.keyCode == 9){
+        //this.tabFocusClue();
+        var clueElems = document.getElementsByClassName("clue");
+        var clueNum = -1;
+        var clueDirection = "";
+        for(var i = 0; i < clueElems.length; i++){
+          if(clueElems[i].classList.contains("selected")){
+            clueElems[i].classList.remove("selected");
+          }
+        }
+        return;
+      }
+    }
     if(this.constructMode != "fill"){
       return;
     }
@@ -1026,9 +1197,6 @@ export class CreateComponent implements OnInit, AfterViewInit {
           }
         }
       }
-      else if(this.constructMode == "clue"){
-        //next clue
-      }
     }
 
   }
@@ -1036,54 +1204,43 @@ export class CreateComponent implements OnInit, AfterViewInit {
   @HostListener('document:keyup', ['$event'])
   handleKeyUpEvent(event: KeyboardEvent) {
     if(this.constructMode == "clue"){
+      if(event.keyCode == 9){
+        if(document.activeElement!.classList.contains("clue-input")){
+          document.activeElement!.parentElement!.classList.add("selected");
+        }
+      }
+        //document.activeElement.
+        //(<HTMLTextAreaElement> document.getElementsByClassName("clue selected")[0].childNodes[1]).focus();
+        //(<HTMLTextAreaElement> clueElems[0].childNodes[1]).focus();
       this.setAcrossClueString();
       this.setDownClueString();
       return;
     }
   }
 
-  checkStandards(){
-    var highestAcross = -1;
-    var highestDown = -1;
-
-    for(var i = 0; i < this.gridElems.length; i++){
-      var acrossNum = this.getAcrossFromElem(this.gridElems[i]);
-      if(acrossNum > highestAcross){
-        highestAcross = acrossNum;
-      }
-      var downNum = this.getDownFromElem(this.gridElems[i]);
-      if(downNum > highestDown){
-        highestDown = downNum;
+  checkStandards(): boolean {
+    for(var i = 0; i < this.puzzleGridString.length; i++){
+      if(this.puzzleGridString[i] == "."){
+        alert("Could not submit: Puzzle grid contains empty squares.")
+        return false;
       }
     }
-
-    var acrossWordsLengths: number[] = new Array(highestAcross);
-    var downWordsLengths: number[] = new Array(highestDown);
-
-    for(var i = 0; i < this.gridElems.length; i++){
-      var acrossNum = this.getAcrossFromElem(this.gridElems[i]);
-      if(acrossWordsLengths[acrossNum] == undefined){
-        acrossWordsLengths[acrossNum] = 0;
-      }
-      else{
-        acrossWordsLengths[acrossNum] = acrossWordsLengths[acrossNum] + 1;
-      }
-      var downNum = this.getDownFromElem(this.gridElems[i]);
-      if(downWordsLengths[downNum] == undefined){
-        downWordsLengths[downNum] = 0;
-      }
-      else{
-        downWordsLengths[downNum] = downWordsLengths[downNum] + 1;
+    var acrossArray = this.acrossClues.split(";");
+    for(var i = 0; i < acrossArray.length-1; i++){
+      if(acrossArray[i] == ""){
+        alert("Could not submit: One or more Across clues contains an empty value.")
+        return false;
       }
     }
-
-    for(var i = 0; i < acrossWordsLengths.length; i++){
-
+    var downArray = this.downClues.split(";");
+    for(var i = 0; i < downArray.length-1; i++){
+      if(downArray[i] == ""){
+        alert("Could not submit: One or more Down clues contains an empty value.")
+        return false;
+      }
     }
-
+    return true;
   }
-
-
 
 
 

@@ -38,7 +38,7 @@ export class PuzzleComponent implements OnInit, AfterViewInit {
   }
 
   ngOnInit(): void {
-    document.getElementById("nav-table")!.style.display="none";
+    document.getElementById("puzzle-nav")!.style.display="none";
     document.getElementById("create-button")!.style.display="none";
     this.route.paramMap.pipe(
       switchMap((params: ParamMap) =>
@@ -54,7 +54,7 @@ export class PuzzleComponent implements OnInit, AfterViewInit {
 
   ngOnDestroy(): void {
     clearTimeout(this.timer);
-    document.getElementById("nav-table")!.style.display="block";
+    document.getElementById("puzzle-nav")!.style.display="block";
     document.getElementById("create-button")!.style.display="block";
     (<HTMLElement> document.getElementById("headline-sub-title")).innerHTML = "";
   }
@@ -68,17 +68,18 @@ export class PuzzleComponent implements OnInit, AfterViewInit {
     this.buildTable();
     this.setClueHeader(<HTMLElement> document.getElementsByClassName("clue")![0]);
     this.totalTime = Number(this.getCookie("timer" + this.puzzleId));
-    this.counter();
+    this.checkAnswers();
+    if(!this.puzzleComplete){
+      this.counter();
+    }
     document.getElementById('timer-start-pause-button')!.addEventListener("click", () => {
-
       clearTimeout(this.timer);
-
       this.paused = !this.paused;
       if(!this.paused) {
         this.counter();
         document.getElementById("timer")!.style.color="black";
-        (<HTMLElement> document.getElementsByClassName("clue-section-listing")![0]).style.backgroundColor="#FFF";
-        (<HTMLElement> document.getElementsByClassName("clue-section-listing")![1]).style.backgroundColor="#FFF";
+        (<HTMLElement> document.getElementsByClassName("clue-section-listing")![0]).style.backgroundColor="inherit";
+        (<HTMLElement> document.getElementsByClassName("clue-section-listing")![1]).style.backgroundColor="inherit";
         document.getElementById("clue-header-text")!.classList.remove("hidden");
         document.getElementById("clue-header-number")!.classList.remove("hidden");
         this.unhideClues();
@@ -97,18 +98,6 @@ export class PuzzleComponent implements OnInit, AfterViewInit {
 
   getPuzzle(id: String): void {
     this.puzzle = this.app.getPuzzle(id);
-    //this.puzzle = puzzle;
-    //}
-      /*this.puzzleService.getPuzzlesFromDB().subscribe(
-        puzzles => {
-          this.puzzles = puzzles;
-        }
-      );
-      for(var puzzle of this.puzzles){
-        if(puzzle.id == id){
-          this.puzzle = puzzle;
-        }
-      }*/
   }
 
   highlightWord(elem: HTMLElement) {
@@ -758,6 +747,14 @@ export class PuzzleComponent implements OnInit, AfterViewInit {
       }
     }
     this.puzzleComplete = true;
+    this.completePuzzle();
+  }
+
+  completePuzzle(){
+    this.populateUserGridString();
+    (<HTMLElement> document.getElementById("timer"))!.style.color = "rgb(114, 148, 130)";
+    (<HTMLElement> document.getElementById("timer"))!.style.fontWeight = "bold";
+    window.clearTimeout(this.timer);
   }
 
   setTimer(time: number) {

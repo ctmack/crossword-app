@@ -1,9 +1,9 @@
 .headline {
 	font-size: 19px;
-	padding-top: 30px;
-	padding-bottom: 15px;
+	padding-top: 25px;
+	padding-bottom: 25px;
 	color: rgb(24, 154, 214);
-	display: inline-flex;
+	display: block;
 	width: 100%;
 	text-align: left;
 	/*background-image: linear-gradient(45deg, rgb(24, 154, 214), white, white)*/
@@ -21,35 +21,40 @@
 	font-size: 27px;
 	line-height: 20px;
 	cursor: pointer;
+	float: left;
 }
 
 #headline-title{
 	margin-right: 20px;
+	float: left;
 }
 
 #puzzle-nav{
-    text-align: center;
+    text-align: left;
     border: none;
     font-family: Arial;
-    border-spacing: 50px 0;
+    border-spacing: 30px 0;
+    margin-top: 50px;
 }
 
 
 .puzzle-link{
-	height: 250px;
-	width: 200px;
-	/*border: none;*/
+	cursor: pointer;
+	float: left;
+	margin-left: 10px;
+	margin-right: 10px;
+	text-align: center;
+	height: 200px;
+	width: 140px;
 	border-spacing: 50px 0;
 	border: 3px solid rgb(240,240,240);
-	/*background-color: rgb(240,240,240);*/
 }
 
 .puzzle-link:hover{
-	height: 250px;
-	width: 200px;
-	/*border: none;*/
 	border-spacing: 50px 0;
-	background-color: rgb(200, 222, 244);
+	background-color: rgb(208,233,243);
+	/*background-color: rgb(24, 154, 214, 0.2);*/
+	/*background-color: rgb(200, 222, 244);*/
 	border: 3px solid rgb(200, 222, 244);
 }
 
@@ -63,6 +68,21 @@
 	width: 80%;
 	margin: auto;
 	padding-bottom: 10px;
+	padding-top: 20px;
+	font-size: 14px;
+	font-weight: bold;
+}
+
+.puzzle-section-title{
+	font-family: Montesarrat;
+	margin-left: 50px;
+	margin-bottom: 15px;
+	color: rgb(24, 154, 214);
+	font-size: 16px;
+}
+
+.puzzle-section-selector {
+	margin-left: 40px;
 }
 
 .puzzle-date{
@@ -78,19 +98,16 @@
 }
 
 .puzzle-icon{
-	height: 120px;
-	width: 120px;
+	height: 70px;
+	width: 70px;
 }
 
-table {
+#nav-table {
     border: none;
     font-family: Arial;
-    border-spacing: 50px 0;
+    border-spacing: 30px 0;
 }
 
-#nav-table th{
-	cursor: pointer;
-}
 
 .clue-section-title{
 	font-family: Montesarrat;
@@ -137,7 +154,10 @@ table {
 
 #crossword-table {
 	border-spacing: 0px;
-	border: 1px solid #000;
+	border-top: 2px solid #000;
+	border-right: 2px solid #000;
+	border-left: 1px solid #000;
+	border-bottom: 1px solid #000;
 	cursor: pointer;
 	font-family: Arial;
 	background-color: white;
@@ -146,7 +166,8 @@ table {
 #crossword-table th {
 	height: 50px;
 	width: 50px;
-	border: 1px solid #000;
+	border-left: 1px solid #000;
+	border-bottom: 1px solid #000;
 }
 
 #crossword-table th.inactive{
@@ -161,4 +182,43 @@ table {
 #crossword-table th.focus-word{
 	background-color: rgb(200, 222, 244);
 }
+
+#create-button {
+	text-decoration: none;
+	color:white;width: 130px;
+	height: 30px;
+	background-color: rgb(24, 154, 214);;
+	display: block;
+	text-align: center;
+	line-height: 30px;
+	margin: auto;
+	font-size: 16px;
+}
+
+#create-button:hover {
+	background-color: rgb(24, 154, 214, 0.8);
+}
+
+.create-link {
+	background-color: rgb(24, 154, 214);
+	font-family: Montesarrat;
+	color: white;
+	border: none;
+	height: 206px;
+	width: 146px;
+	cursor: pointer;
+}
+
+.create-link:hover {
+	background-color: rgb(24, 154, 214, 0.8);
+	border: none;
+	height: 206px;
+	width: 146px;
+}
+
+.create-link .puzzle-title {
+	height: 170px;
+	font-size: 15px;
+}
+
 
