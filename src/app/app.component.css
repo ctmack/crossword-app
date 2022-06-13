@@ -1,13 +1,15 @@
 .headline {
 	font-size: 19px;
-	padding-top: 25px;
+	padding-top: 20px;
+	height: 20px;
 	padding-bottom: 25px;
 	color: rgb(24, 154, 214);
 	display: block;
 	width: 100%;
 	text-align: left;
-	/*background-image: linear-gradient(45deg, rgb(24, 154, 214), white, white)*/
-	/*color: white; */
+	margin-bottom: 20px;
+	border-bottom: 2px solid #EEE;
+	background-color: white;
 }
 
 .headline a {
@@ -29,12 +31,17 @@
 	float: left;
 }
 
+#headline-sub-title{
+	margin-right: 20px;
+	float: left;
+}
+
 #puzzle-nav{
     text-align: left;
     border: none;
     font-family: Arial;
     border-spacing: 30px 0;
-    margin-top: 50px;
+    margin-top: 35px;
 }
 
 
@@ -75,7 +82,7 @@
 
 .puzzle-section-title{
 	font-family: Montesarrat;
-	margin-left: 50px;
+	margin-left: 55px;
 	margin-bottom: 15px;
 	color: rgb(24, 154, 214);
 	font-size: 16px;
@@ -181,6 +188,13 @@
 
 #crossword-table th.focus-word{
 	background-color: rgb(200, 222, 244);
+}
+
+#sign-in-button {
+	height: 30px;
+	font-size: 16px;
+	line-height: 30px;
+	cursor: pointer;
 }
 
 #create-button {

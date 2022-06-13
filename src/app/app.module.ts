@@ -6,6 +6,7 @@ import { AppComponent } from './app.component';
 import { PuzzleComponent } from './puzzle/puzzle.component';
 import { provideFirebaseApp, getApp, initializeApp } from '@angular/fire/app';
 import { getFirestore, provideFirestore } from '@angular/fire/firestore';
+import { getAuth, provideAuth } from '@angular/fire/auth';
 
 import { environment } from '../environments/environment';
 import { CreateComponent } from './create/create.component';
@@ -22,7 +23,8 @@ import { CreateComponent } from './create/create.component';
     //FireModule.initializeApp(environment.firebaseConfig),
     //FirestoreModule
     provideFirebaseApp(() => initializeApp(environment.firebaseConfig)),
-    provideFirestore(() => getFirestore())
+    provideFirestore(() => getFirestore()),
+    provideAuth(() => getAuth())
   ],
   providers: [],
   bootstrap: [AppComponent]

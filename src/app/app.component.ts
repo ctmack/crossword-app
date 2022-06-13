@@ -3,6 +3,8 @@ import { Puzzle } from './puzzle';
 import { PuzzleService } from './puzzle.service';
 import { Router } from '@angular/router';
 import { Firestore, collectionData, collection } from '@angular/fire/firestore';
+import { Auth } from '@angular/fire/auth';
+import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { Observable } from 'rxjs';
 
 @Component({
@@ -21,7 +23,7 @@ export class AppComponent {
     this.selectedPuzzle = puzzle;
   }
 
-  constructor(private puzzleService: PuzzleService, private router : Router, private store: Firestore) {
+  constructor(private puzzleService: PuzzleService, private router : Router, private store: Firestore, private auth: Auth) {
     const col = collection(store, 'puzzle-store');
     this.item$ = collectionData(col) as Observable<Puzzle[]>;
     console.log(this.item$);
@@ -61,6 +63,22 @@ export class AppComponent {
 
   ngOnInit(): void {
     this.getPuzzlesFromDB();
+    /*document.getElementById('sign-in-button')!.addEventListener("click", (event) => {
+      var provider = new GoogleAuthProvider();
+      signInWithPopup(this.auth, provider).then(function(result) {
+        //var token = result.credential.accessToken;
+        var user = result.user;
+        document.getElementById('sign-in-button')!.innerHTML = "Sign In Again!";
+        //console.log(token)
+        console.log(user)
+      }).catch(function(error) {
+        var errorCode = error.code;
+        var errorMessage = error.message;
+      
+        console.log(error.code)
+        console.log(error.message)
+      });
+    })*/
   }
 
   ngOnDestroy(): void {

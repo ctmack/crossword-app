@@ -172,10 +172,10 @@ export class CreateComponent implements OnInit, AfterViewInit {
       this.savePuzzle();
     })
     document.getElementById('submit-button')!.addEventListener("click", (event) => {
-      this.submitPuzzle();
+      //this.submitPuzzle();
     })
     document.getElementById('export-button')!.addEventListener("click", (event) => {
-      this.exportPuzzle();
+      //this.exportPuzzle();
     })
   }
 
@@ -807,7 +807,6 @@ export class CreateComponent implements OnInit, AfterViewInit {
       targetElem.classList.add("selected");
       (<HTMLElement> targetElem.getElementsByClassName("clue-input")[0]).focus();
       var clueNum = parseInt((<HTMLElement> targetElem.getElementsByClassName("clue-number")[0]).innerHTML.replace(/[^0-9]/gi, ''));
-      console.log(clueNum);
       for(var i = 0; i < this.gridElems.length; i++){
         if((clueDirection == "A" && this.getAcrossFromElem(this.gridElems[i]) == clueNum) || (clueDirection == "D" && this.getDownFromElem(this.gridElems[i]) == clueNum)){
           this.highlightWord(this.gridElems[i]);
@@ -819,8 +818,8 @@ export class CreateComponent implements OnInit, AfterViewInit {
   }
 
   populateBlankClues() {
-    console.log("across length: " + this.acrossClues.length);
-    console.log("down length: " + this.downClues.length);
+    //console.log("across length: " + this.acrossClues.length);
+    //console.log("down length: " + this.downClues.length);
   }
 
   nextOpenSpaceInCurrentClue(elem: HTMLElement){

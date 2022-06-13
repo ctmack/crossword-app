@@ -4,12 +4,16 @@
     "source": "functions"
   },
   "hosting": {
-    "public": "public",
+    "public": "dist/crossword-app",
     "ignore": [
       "firebase.json",
       "**/.*",
       "**/node_modules/**"
-    ]
+    ],
+    "rewrites": [ {
+    "source": "**",
+    "destination": "/index.html"
+    } ]
   },
   "emulators": {
     "hosting": {
