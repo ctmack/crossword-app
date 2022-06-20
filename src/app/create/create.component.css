@@ -221,13 +221,29 @@ textarea.clue-input:focus {
 }
 
 .review-button:hover{
-	background-color: rgb(24, 154, 214, 0.7);
+	background-color: rgb(24, 154, 214, 1);
+	text-decoration: underline;
+}
+
+.review-disabled{
+	background-color: #888;
+	cursor: not-allowed;
+}
+
+.review-disabled:hover{
+	background-color: #777;
+	cursor: not-allowed;
+	text-decoration: none;
 }
 
 #clue-mode-toggle{
 	color: rgb(24, 154, 214);
 	text-align: right;
 	cursor: pointer;
+}
+
+#clue-mode-toggle:hover{
+	text-decoration: underline;
 }
 
 .hidden {

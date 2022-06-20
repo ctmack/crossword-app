@@ -4,7 +4,7 @@ import { PuzzleService } from './puzzle.service';
 import { Router } from '@angular/router';
 import { Firestore, collectionData, collection } from '@angular/fire/firestore';
 import { Auth } from '@angular/fire/auth';
-import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, User } from "firebase/auth";
 import { Observable } from 'rxjs';
 
 @Component({
@@ -16,6 +16,7 @@ import { Observable } from 'rxjs';
 export class AppComponent {
   puzzles : Puzzle[] = [];
   item$: Observable<Puzzle[]>;
+  user: User | null = null;
 
 
   selectedPuzzle?: Puzzle;
@@ -45,10 +46,14 @@ export class AppComponent {
       }
       puzzleIcon.classList.add("puzzle-icon");
       routerLink.appendChild(puzzleIcon);
+      var puzzleAuthor = document.createElement("div");
+      puzzleAuthor.classList.add("puzzle-author");
+      puzzleAuthor.innerHTML = "By " + puzzle.author;
+      routerLink.appendChild(puzzleAuthor);
       var puzzleDate = document.createElement("div");
       puzzleDate.classList.add("puzzle-date");
       //date formatting here
-      puzzleDate.innerHTML = puzzle.date;
+      puzzleDate.innerHTML = puzzle.displayDate;
       routerLink.appendChild(puzzleDate);
       var puzzleSize = document.createElement("div");
       puzzleSize.classList.add("puzzle-size");
@@ -63,22 +68,38 @@ export class AppComponent {
 
   ngOnInit(): void {
     this.getPuzzlesFromDB();
-    /*document.getElementById('sign-in-button')!.addEventListener("click", (event) => {
-      var provider = new GoogleAuthProvider();
-      signInWithPopup(this.auth, provider).then(function(result) {
-        //var token = result.credential.accessToken;
-        var user = result.user;
-        document.getElementById('sign-in-button')!.innerHTML = "Sign In Again!";
-        //console.log(token)
-        console.log(user)
-      }).catch(function(error) {
-        var errorCode = error.code;
-        var errorMessage = error.message;
-      
-        console.log(error.code)
-        console.log(error.message)
-      });
-    })*/
+    document.getElementById('sign-in-button')!.addEventListener("click", (event) => {
+      if(this.user == null){
+        var provider = new GoogleAuthProvider();
+        signInWithPopup(this.auth, provider).then( (result) => {
+          //var token = result.credential.accessToken;
+          this.user = result.user;
+          document.getElementById('sign-in-button')!.innerHTML = "(Sign Out)";
+          document.getElementById('sign-in-button')!.classList.add("sign-out");
+          document.getElementById('welcome-msg')!.innerHTML = "Hello, " + this.user.displayName!.split(" ")[0];
+          document.getElementById('submit-overlay-button')!.innerHTML = "Submit";
+          document.getElementById('submit-overlay-button')!.classList.remove("review-disabled");
+          //console.log(token)
+          console.log(this.user);
+        }).catch(function(error) {
+          console.log(error.code);
+          console.log(error.message);
+        });
+      }
+      else{
+        signOut(this.auth).then(() => {
+          this.user = null;
+          document.getElementById('sign-in-button')!.innerHTML = "Sign In";
+          document.getElementById('sign-in-button')!.classList.remove("sign-out");
+          document.getElementById('welcome-msg')!.innerHTML = "";
+          document.getElementById('submit-overlay-button')!.innerHTML = "Sign in to submit";
+          document.getElementById('submit-overlay-button')!.classList.add("review-disabled");
+        }).catch((error) => {
+          console.log(error.code)
+          console.log(error.message)
+        });
+      }
+    })
   }
 
   ngOnDestroy(): void {
@@ -86,6 +107,8 @@ export class AppComponent {
   }
 
   getPuzzle(id : String): Puzzle | undefined {
+    console.log("appId:" + id);
+    console.log("appPuzzles:" + this.puzzles);
     for(var puzzle of this.puzzles){
       if(puzzle.id == id){
         return puzzle;

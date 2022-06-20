@@ -7,6 +7,7 @@ import { RespWord } from '../resp-word';
 import { switchMap } from 'rxjs/operators';
 import { getFirestore, doc, setDoc, updateDoc } from "firebase/firestore";
 import { Firestore, collectionData, collection } from '@angular/fire/firestore';
+import { AppComponent } from '../app.component';
 
 @Component({
   selector: 'app-create',
@@ -23,8 +24,9 @@ export class CreateComponent implements OnInit, AfterViewInit {
   focusAcross: boolean = true;
   puzzleComplete: boolean = false;
   puzzleGridString: String = "";
+  puzzleTitle: String = "";
   constructMode: String = ""; // build, fill, clue
-  mirrorMode: String = ""; // free*, x-axis*, y-axis*, xy-axis*, rotational*, diagonal*
+  mirrorMode: String = ""; // free, x-axis, y-axis, xy-axis, rotational, diagonal
   puzzleWidth: number = 15;
   puzzleHeight: number = 15;
   acrossClues: String = "";
@@ -33,7 +35,7 @@ export class CreateComponent implements OnInit, AfterViewInit {
   wordListStartingIndex: number = -1;
   wordListMaxLength: number = 40;
 
-  constructor(private store: Firestore) {
+  constructor(private store: Firestore, private app : AppComponent) {
   }
 
   ngOnInit(): void {
@@ -44,6 +46,12 @@ export class CreateComponent implements OnInit, AfterViewInit {
         this.puzzleGridString = this.puzzleGridString + ".";
       }
     }
+
+    if(this.app.user != null){
+      document.getElementById('submit-overlay-button')!.innerHTML = "Submit";
+      document.getElementById('submit-overlay-button')!.classList.remove("review-disabled");
+    }
+
   }
 
   ngOnDestroy(): void {
@@ -171,8 +179,10 @@ export class CreateComponent implements OnInit, AfterViewInit {
     document.getElementById('save-button')!.addEventListener("click", (event) => {
       this.savePuzzle();
     })
-    document.getElementById('submit-button')!.addEventListener("click", (event) => {
-      //this.submitPuzzle();
+    document.getElementById('submit-overlay-button')!.addEventListener("click", (event) => {
+      if(this.app.user != null){
+        this.submitPuzzleOverlay();
+      }
     })
     document.getElementById('export-button')!.addEventListener("click", (event) => {
       //this.exportPuzzle();
@@ -986,7 +996,61 @@ export class CreateComponent implements OnInit, AfterViewInit {
     }
   }
 
-  async submitPuzzle(){
+  getTodayDateString() : string{
+    var options = { weekday: "long", year: "numeric", month: "long", day: "numeric" } as const;
+    var date = new Date();
+    var dateString = date.toLocaleString('en-US', options);
+    return dateString;
+  }
+
+  submitPuzzleOverlay(){
+    var previousMode = this.constructMode;
+    this.constructMode = "submit";
+    if(this.puzzleTitle == ""){
+      (<HTMLTextAreaElement> document.getElementById("puzzle-title-input"))!.value = this.getTodayDateString();
+    }
+    document.getElementById("puzzle-title-input")!.addEventListener("click", (event) => {
+      if(this.puzzleTitle == ""){
+        (<HTMLTextAreaElement> document.getElementById("puzzle-title-input"))!.value = "";
+        (<HTMLElement> event.target)!.focus();
+      }
+    });
+    document.getElementById("puzzle-title-input")!.addEventListener("focusout", (event) => {
+      if((<HTMLTextAreaElement> document.getElementById("puzzle-title-input"))!.value != this.getTodayDateString.toString()){
+        this.puzzleTitle = (<HTMLTextAreaElement> document.getElementById("puzzle-title-input"))!.value;
+      }
+
+      if(this.puzzleTitle == "" || (<HTMLTextAreaElement> document.getElementById("puzzle-title-input"))!.value == ""){
+        this.puzzleTitle == "";
+        (<HTMLTextAreaElement> document.getElementById("puzzle-title-input"))!.value = this.getTodayDateString();
+      }
+      else{
+        this.puzzleTitle = (<HTMLTextAreaElement> document.getElementById("puzzle-title-input"))!.value;
+      }
+    });
+    if(this.puzzleHeight >= 15){
+      (<HTMLImageElement> document.getElementById("submit-icon"))!.src="./../../assets/xword-icon-large.jpg";
+    }
+    else{
+      (<HTMLImageElement> document.getElementById("submit-icon"))!.src="./../../assets/xword-mini-icon.jpg";
+    }
+    (<HTMLElement> document.getElementById("submit-author"))!.innerHTML = this.app.user!.displayName!.toString();
+    document.getElementById("submit-dimensions")!.innerHTML = this.puzzleWidth + " x " + this.puzzleHeight;
+    document.getElementById("submit-dimensions")!.innerHTML = this.puzzleWidth + " x " + this.puzzleHeight;
+    document.getElementById("submit-overlay")!.classList.remove("hidden");
+    document.getElementById("submit-overlay")!.addEventListener("click", (event) => {
+      if((<HTMLElement> event.target)!.id=="submit-overlay"){
+        document.getElementById("submit-overlay")!.classList.add("hidden");
+        this.constructMode = previousMode;
+      }
+    });
+    document.getElementById('submit-button')!.addEventListener("click", (event) => {
+      this.submitPuzzle(previousMode);
+    });
+    (<HTMLTextAreaElement> document.getElementById("puzzle-title-input"))!.focus()
+  }
+
+  async submitPuzzle(previousMode : String){
     var gridString = "";
     for(var i = 0; i < this.puzzleGridString.length; i++){
       if(this.puzzleGridString[i] == "#"){
@@ -996,9 +1060,11 @@ export class CreateComponent implements OnInit, AfterViewInit {
         gridString = gridString + ".";
       }
     }
-    var options = { weekday: "long", year: "numeric", month: "long", day: "numeric" } as const;
+    var options = { year: "numeric", month: "short", day: "numeric" } as const;
     var date = new Date();
-    var dateString = date.toLocaleString('en-US', options);
+    var displayDateString = date.toLocaleString('en-US', options);
+
+    var submitPuzzleTitle = (<HTMLTextAreaElement> document.getElementById("puzzle-title-input"))!.value;
 
     if(this.checkStandards()){
       if(this.puzzleId == ""){
@@ -1006,8 +1072,12 @@ export class CreateComponent implements OnInit, AfterViewInit {
       }
       await setDoc(doc(this.store, "puzzle-store", this.puzzleId), {
         id: this.puzzleId,
-        title: dateString,
-        date: dateString,
+        title: submitPuzzleTitle,
+        author: this.app.user!.displayName,
+        authorEmail: this.app.user!.email,
+        authorUID: this.app.user!.uid,
+        date: this.getTodayDateString(),
+        displayDate: displayDateString,
         grid: gridString,
         height: this.puzzleHeight,
         width: this.puzzleWidth,
@@ -1016,6 +1086,8 @@ export class CreateComponent implements OnInit, AfterViewInit {
         downClues: this.downClues
       });
     }
+
+    this.constructMode = previousMode;
   }
 
   exportPuzzle(){
@@ -1062,6 +1134,10 @@ export class CreateComponent implements OnInit, AfterViewInit {
     }
   }
 
+  /*@HostListener("window:beforeunload", ['$event'])
+  handleUnload(event: Event){
+    return confirm("Are you sure you want to reload? All puzzle progress will be");
+  };*/
 
   @HostListener('document:keydown', ['$event'])
   handleKeyboardEvent(event: KeyboardEvent) {

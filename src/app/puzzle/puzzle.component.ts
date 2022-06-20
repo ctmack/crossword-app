@@ -47,6 +47,15 @@ export class PuzzleComponent implements OnInit, AfterViewInit {
     ).subscribe( id => { this.puzzleId = this.puzzleId + id; });
     this.getPuzzle(this.puzzleId);
 
+    if(this.puzzle != undefined){
+      //document.cookie = "current_puzzle" + "=" + JSON.stringify(this.puzzle);
+    }
+    else if(this.getCookie("current_puzzle") != ""){
+      console.log("here:"+this.getCookie("current_puzzle"));
+      this.router.navigateByUrl('/puzzle/' + JSON.parse(this.getCookie("current_puzzle")).puzzleId);
+      this.puzzle = JSON.parse(this.getCookie("current_puzzle")) as Puzzle;
+    }
+
     if(this.puzzle == undefined){
       this.router.navigateByUrl('/');
     }
@@ -57,6 +66,7 @@ export class PuzzleComponent implements OnInit, AfterViewInit {
     document.getElementById("puzzle-nav")!.style.display="block";
     document.getElementById("create-button")!.style.display="block";
     (<HTMLElement> document.getElementById("headline-sub-title")).innerHTML = "";
+    this.deleteCookie("current_puzzle");
   }
 
   ngAfterViewInit(): void {
@@ -98,6 +108,8 @@ export class PuzzleComponent implements OnInit, AfterViewInit {
 
   getPuzzle(id: String): void {
     this.puzzle = this.app.getPuzzle(id);
+    console.log("method:" + this.puzzle);
+    console.log("methodID:" + id);
   }
 
   highlightWord(elem: HTMLElement) {
@@ -430,6 +442,18 @@ export class PuzzleComponent implements OnInit, AfterViewInit {
       }
     }
 
+  }
+
+  deleteCookie(cookieName: String){
+    var cookies = document.cookie.split(";");
+    for (var i = 0; i < cookies.length; i++) {
+      var cookie = cookies[i];
+      var eqPos = cookie.indexOf("=");
+      var name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
+      if(name == cookieName){
+        document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT";
+      }
+    }
   }
 
   getCookie(cookieName : String){

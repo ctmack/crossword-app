@@ -11,6 +11,25 @@
 
 </head>
 <body>
+  <div id="submit-overlay" class="hidden">
+    <div id="submit-popup-form">
+      <div style="display: inline-flex;height:250px;margin:auto;width: 100%;">
+        <div style="width: 45%;text-align: right;">
+          <img id="submit-icon" src="./../../assets/xword-mini-icon.jpg"/>
+        </div>
+        <div style="width: 55%;">
+          <div style="height:50%;padding-right: 20px;">
+            <textarea type="text" id="puzzle-title-input" class="default" name="puzzle-title-input"></textarea>
+          </div>
+          <div style="font-size: 15px;text-align: left;height:50%;margin-top:5px">
+            <div id="submit-author" style="margin-bottom: 5px;"></div>
+            <div id="submit-dimensions"></div>
+          </div>
+        </div>
+      </div>
+      <div id="submit-button">Submit</div>
+    </div>
+  </div>
   <app-root></app-root>
 </body>
 </html>
